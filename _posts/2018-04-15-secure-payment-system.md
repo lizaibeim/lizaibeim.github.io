@@ -41,7 +41,7 @@ After construct the SSL authentication protocol, the server and client can trust
 For basic communication between server and client, it is encrypted first via AES with the session key. Besides the basic communication encryption, this program adopts RSA algorithm and SHA1 algorithm to encrypt the data.
 
 #### SHA1 (with timestamp)
-Firstly, the data to be sent would be concatenated with the current timestamp accessed from the system time. The concatenated data is then hashed by the SHA1 algorithm and signed by the sender's private key, which will produce signed digested message. 
+Firstly, the data to be sent would be concatenated with the current timestamp accessed from the system time. The concatenated data is then hashed by the SHA1 algorithm and signed by the sender's private key, which will produce signed digested message.
 
 The extra timestamp can make the collision resistance of the hash algorithm more robust. The signature of the digested message can verify that the message was sent from the original sender, and the hash algorithm can be used to verify the integrity of the message to prevent it from malicious tampering.
 
@@ -58,7 +58,7 @@ When the server sends a message to the client, the server will concatenate the m
 
 On the client side, the client receives the cipher text and decrypts the cipher text with its private key, and gets the signed digested message and the raw concatenated message.
 
-The client verifies the sender by decrypting the signed digested message with the server's public key. If successful, then it will get the digested message. And then the client will use the raw concatenated message to generate a new digested message hashed by the SHA1 algorithm. Then, it will compare the new digested message with the received digested message. If the two are equal, the data is authentic and untampered. Thus, the client will send a response to inform the server of the successful transmission with the message “true”. Otherwise, it means that the data has been tampered and the client will request the server to resend the message with “false”. The response and request messages are encrypted too.
+The client verifies the sender by decrypting the signed digested message with the server's public key. If successful, then it will get the digested message. And then the client will use the raw concatenated message to generate a new digested message hashed by the SHA1 algorithm. Then, it will compare the new digested message with the received digested message. If the two are equal, the data is authentic and unaltered. Thus, the client will send a response to inform the server of the successful transaction with the message “true”. Otherwise, it means that the data has been tampered and the client will request the server to resend the message with “false”. The response and request messages are encrypted too.
 
 #### Password authentication
 The client needs to input their password to complete the transaction.
