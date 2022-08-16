@@ -1,6 +1,7 @@
 ---
 layout: page
 title: ABOUT ME
+cover-img: /assets/img/portrait.jpg
 
 ---
 
