@@ -25,13 +25,17 @@ Your browser does not support the video tag.
 For operation, the mouse left click would exert a magnetic field on the interactable metal objects in a positive direction, and the right click would exert the negative direction magnetic field. When two opposite magnetic objects are close, they attract each other, and when the same magnetic objects are close, they repulse each other.
 The player can keep the **E** key pressed or press the **E** key once to hover the objects and use the left or right mouse click to throw them at the enemy.
 
-<img src="/assets/img/the-metal-menace-op1.png" alt="operation 1" width="400" class="center"/>
+<img src="/assets/img/the-metal-menace-op1.png" alt="operation 1" width="800" class="center"/>
+<sub> Laser weapon </sub>
 
-<img src="/assets/img/the-metal-menace-op2.png" alt="operation 2" width="400" class="center"/>
+<img src="/assets/img/the-metal-menace-op2.png" alt="operation 2" width="800" class="center"/>
+<sub>Two like metal objects repulse each other </sub>
 
-<img src="/assets/img/the-metal-menace-op3.png" alt="operation 3" width="400" class="center"/>
+<img src="/assets/img/the-metal-menace-op3.png" alt="operation 3" width="800" class="center"/>
+<sub>Two opposite metal objects attract each other </sub>
 
-<img src="/assets/img/the-metal-menace-op4.png" alt="operation 4" width="400" class="center"/>
+<img src="/assets/img/the-metal-menace-op4.png" alt="operation 4" width="800" class="center"/>
+<sub> Hovering the object </sub>
 
 ## Acknowledgement
 [DADIU](http://www.dadiu.dk/bleedingtree)
