@@ -13,20 +13,20 @@ The main objective of this project is to implement the basic functionality of a 
 
 The [Motion Matching](https://www.gameanim.com/2016/05/03/motion-matching-ubisofts-honor/), a next-gen animation technology, is a novel method for generating high quality, smooth and complicated character movement. Rather than playing specific artificial animations, Motion Matching makes the characters in game more like performing some real-life actions which are recorded by motion capturing in reality. Motion Matching allows animator to specific the significant characteristics of animation clips which should be emphasized, and the best matching clip is selected based on the nearest neighbor search when doing the comparison among the motion capture database. Compared to the traditional animation system, Motion Matching demonstrates a simple and effective approach to modify the current animation system by directly generating new motion database. Since it is a data-driven method, to a certain extent the performance of the Motion Matching system is positively correlated with the size of the motion capture database. Apart from that, the performance of the system are bound by the CPU as well as the memory because it does the real-time computation consecutively by a very short time interval while on running. This results in the trade off among the responsiveness of the system, the accuracy of the system and the budgets on CPU, memory.  
 
-## Motion caputre
+## Motion Caputre
 Record the mocap data  
-<video width="760" height="480" controls>  
+<video width="740" height="480" controls>  
   <source src="/assets/video/motion-matching-record.mp4" type="video/mp4">
 Your browser does not support the video tag.
 </video>  
 Export as usable animations  
-<video width="760" height="480" controls>
+<video width="740" height="480" controls>
   <source src="/assets/video/motion-matching-animation.mp4" type="video/mp4">
 Your browser does not support the video tag.
 </video>
 
-## Motion matching
-### Implementation logic
+## Motion Matching
+### Implementation Logic
 - Predicted the real-time future trajectory of the character based on the player’s input and the character’s
 historical movement trajectory
 - Selected predicted future trajectory’s K nearest neighboring animation clips from motion capture database
@@ -37,13 +37,19 @@ neighbouring animation clips
 
 ### Demo
 This video shows the basic locomotion with using the motion matching system. The left subtitle is the real-time matching results. The right part is the real-time controller’s input. There are two lines in the demonstration. The line which is straighter, and smoother is the predicted trajectory, and the other line is the matched trajectory. Both of these two lines are relative to the characters’ current position and rotation  
-<video width="760" height="480" controls>
+<video width="740" height="480" controls>
   <source src="/assets/video/motion-matching-demo1.mp4" type="video/mp4">
 Your browser does not support the video tag.
 </video>  
 This video is to show that the system can simulate the deceleration process  
-<video width="760" height="480" controls>
+<video width="740" height="480" controls>
   <source src="/assets/video/motion-matching-demo2.mp4" type="video/mp4">
+Your browser does not support the video tag.
+</video>
+
+### In Game
+<video width="740" height="480" controls>
+  <source src="/assets/video/the-bleeding-tree-trailor.mp4" type="video/mp4">
 Your browser does not support the video tag.
 </video>
 
