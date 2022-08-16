@@ -3,7 +3,8 @@ layout: post
 title: Voice analysis data pipeline on MBOX
 cover-img: /assets/img/viborg.jpg
 thumbnail-img: /assets/img/raspberry.jpg
-share-img: /assets/img/viborg.jpg
+share-img: /assets/img/raspberry.jpg
+gh-repo: lizaibeim/mmla-audio
 tags: [Multimodal Learning Analytics, Machine Learning, Raspberry Pi]
 ---
 
