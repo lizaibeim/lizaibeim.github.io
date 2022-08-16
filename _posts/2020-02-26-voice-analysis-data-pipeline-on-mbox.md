@@ -5,6 +5,7 @@ cover-img: /assets/img/viborg.jpg
 thumbnail-img: /assets/img/raspberry.jpg
 share-img: /assets/img/raspberry.jpg
 gh-repo: lizaibeim/mmla-audio
+gh-badge: [star, fork, follow]
 tags: [Multimodal Learning Analytics, Machine Learning, Raspberry Pi]
 ---
 
