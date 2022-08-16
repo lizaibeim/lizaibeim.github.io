@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Voice analysis data pipeline on MBOX
+title: Voice Analysis Data Pipeline on MBOX
 cover-img: /assets/img/viborg.jpg
 thumbnail-img: /assets/img/raspberry.jpg
 share-img: /assets/img/raspberry.jpg
