@@ -1,7 +1,7 @@
 ---
 layout: page
 title: ABOUT ME
-cover-img: /assets/img/portrait.jpg
+cover-img: /assets/img/portrait.jpg{:height="700px" width="400px"}
 
 ---
 
