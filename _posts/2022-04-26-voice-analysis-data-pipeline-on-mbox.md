@@ -14,12 +14,12 @@ This project is a lightweight voice analysis data pipeline as a part of [MBOX](h
 If you are interested in this project and want to try it by yourself in a real experiment, you may refer to the [project](https://github.com/lizaibeim/mmla-audio) on GitHub.
 
 ## Visualization Demo
-<head>
+<!-- <head>
     <meta charset="UTF-8">
     <title>Awesome-pyecharts</title>
             <script type="text/javascript" src="https://assets.pyecharts.org/assets/echarts.min.js"></script>  
-</head>
-<body>
+</head> -->
+<!-- <body> -->
     <style>.box {  }; </style>
     <div align="left" class="box">
                 <div align="left" id="b8d0bfa257454f2db71368dcbc3f7dfa" class="chart-container" style="width:1600px; height:200px;"></div>
@@ -1705,4 +1705,4 @@ If you are interested in this project and want to try it by yourself in a real e
 <br/>    </div>
     <script>
     </script>
-</body>
+<!-- </body> -->
