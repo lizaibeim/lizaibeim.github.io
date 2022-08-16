@@ -41,7 +41,9 @@ After construct the SSL authentication protocol, the server and client can trust
 For basic communication between server and client, it is encrypted first via AES with the session key. Besides the basic communication encryption, this program adopts RSA algorithm and SHA1 algorithm to encrypt the data.
 
 #### SHA1 (with timestamp)
-Firstly, the data to be sent would be concatenated with the current timestamp accessed from the system time. The concatenated data is then hashed by the SHA1 algorithm and signed by the sender's private key, which will produce signed digested message. The extra timestamp can make the collision resistance of the hash algorithm more robust. The signature of the digested message can verify that the message was sent from the original sender, and the hash algorithm can be used to verify the integrity of the message to prevent it from malicious tampering.
+Firstly, the data to be sent would be concatenated with the current timestamp accessed from the system time. The concatenated data is then hashed by the SHA1 algorithm and signed by the sender's private key, which will produce signed digested message. 
+
+The extra timestamp can make the collision resistance of the hash algorithm more robust. The signature of the digested message can verify that the message was sent from the original sender, and the hash algorithm can be used to verify the integrity of the message to prevent it from malicious tampering.
 
 #### RSA 512/1024
 Then, the signed digested message plus the raw concatenated message are encapsulated into a single String. The String is encrypted by the RSA 512/1024 algorithm, and it will produce a cipher text of the String. This procedure can prevent unauthorized users from viewing the raw concatenated message. Because RSA is encrypted by asymmetric key pairs, it is difficult to decrypt by brute force without keys.
