@@ -15,12 +15,12 @@ The [Motion Matching](https://www.gameanim.com/2016/05/03/motion-matching-ubisof
 
 ## Motion caputre
 Record the mocap data  
-<video width="640" height="480" controls>  
+<video width="800" height="480" controls>  
   <source src="/assets/video/motion-matching-record.mp4" type="video/mp4">
 Your browser does not support the video tag.
 </video>  
 Export as usable animations  
-<video width="640" height="480" controls>
+<video width="800" height="480" controls>
   <source src="/assets/video/motion-matching-animation.mp4" type="video/mp4">
 Your browser does not support the video tag.
 </video>
@@ -37,12 +37,12 @@ neighbouring animation clips
 
 ### Demo
 This video shows the basic locomotion with using the motion matching system. The left subtitle is the real-time matching results. The right part is the real-time controller’s input. There are two lines in the demonstration. The line which is straighter, and smoother is the predicted trajectory, and the other line is the matched trajectory. Both of these two lines are relative to the characters’ current position and rotation  
-<video width="640" height="480" controls>
+<video width="800" height="480" controls>
   <source src="/assets/video/motion-matching-demo1.mp4" type="video/mp4">
 Your browser does not support the video tag.
 </video>  
 This video is to show that the system can simulate the deceleration process  
-<video width="640" height="480" controls>
+<video width="800" height="480" controls>
   <source src="/assets/video/motion-matching-demo2.mp4" type="video/mp4">
 Your browser does not support the video tag.
 </video>
