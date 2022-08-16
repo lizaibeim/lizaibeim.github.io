@@ -52,7 +52,7 @@ This video is to show that the system can simulate the deceleration process
 Your browser does not support the video tag.
 </video>
 
-## Acknowledgement
+## Acknowledgements
 [DADIU](http://www.dadiu.dk/)  
 [Nicolas Simonsen](https://www.linkedin.com/in/nicklas-simonsen-443116201/)  
 [Ubisoft Motion Matching](https://www.gameanim.com/2016/05/03/motion-matching-ubisofts-honor/)  
