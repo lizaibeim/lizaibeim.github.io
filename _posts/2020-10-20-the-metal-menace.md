@@ -1,9 +1,9 @@
 ---
 layout: post
 title: The Metal Menace
-cover-img: /assets/img/the_bleeding_tree.png
-thumbnail-img: /assets/img/the_bleeding_tree.png
-gh-repo: lizaibeim/motion-matching
+cover-img: /assets/img/the-metal-menace-main-menu.png
+thumbnail-img: /assets/img/the-metal-menace-main-menu.png
+gh-repo: lizaibeim/the-metal-menace
 gh-badge: [star, fork, follow]
 tags: [Game Development, AI, C#]
 comments: true
