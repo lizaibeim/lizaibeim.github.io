@@ -17,10 +17,10 @@ This is a mini-game done during the DADIU program. The game mechanism is that th
 Your browser does not support the video tag.
 </video>
 
-## Main menu
+## Main Menu
 <img src="/assets/img/the-metal-menace-main-menu.png" alt="main menu" width="800" class="center"/>
 
-## Operation
+## Operation Guidelines
 For operation, the mouse left click would exert a magnetic field on the interactable metal objects in a positive direction, and the right click would exert the negative direction magnetic field. When two opposite magnetic objects are close, they attract each other, and when the same magnetic objects are close, they repulse each other.
 The player can keep the **E** key pressed or press the **E** key once to hover the objects and use the left or right mouse click to throw them at the enemy.
 
