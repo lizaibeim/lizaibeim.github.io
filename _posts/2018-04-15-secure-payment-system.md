@@ -11,7 +11,7 @@ comments: true
 
 This project is a Java implementation of the secure payment system with Secure Socket Layer(SSL) protocols. We simulate the process of the account balance transfer, including identity authentication, encryption algorithm negotiation, key exchange, and critical data transaction.
 
-## Security mechanism
+## Security Mechanism
 ### SSL Record Protocol and SSL Handshake Protocol
 SSL Record Protocol is based on the secure transaction protocol (e.g., TCP), providing basic services like data encapsulation, compression, and encryption. SSL Handshake Protocol is based on the SSL Record Protocol, used before the data transaction, providing services like identity authentication, encryption algorithms negotiation, and key exchange.
 
@@ -35,7 +35,7 @@ In our online payment system implementation, we first use Java keytool to genera
 
 The generated session key is used to encrypt data during communication between the client and the server. However, the session key is the symmetric key, so if the data is intercepted by others, it may be decrypted by malicious individuals due to lower security compared to the asymmetric key.  This problem will be solved with the following security mechanism.
 
-###	Encryption-with-Password Authentication Protocol
+###	Encryption with Password Authentication Protocol
 After construct the SSL authentication protocol, the server and client can trust each other under the premise that the communication between them are secure.
 
 For basic communication between server and client, it is encrypted first via AES with the session key. Besides the basic communication encryption, this program adopts RSA algorithm and SHA1 algorithm to encrypt the data.
@@ -60,7 +60,7 @@ On the client side, the client receives the cipher text and decrypts the cipher 
 
 The client verifies the sender by decrypting the signed digested message with the server's public key. If successful, then it will get the digested message. And then the client will use the raw concatenated message to generate a new digested message hashed by the SHA1 algorithm. Then, it will compare the new digested message with the received digested message. If the two are equal, the data is authentic and unaltered. Thus, the client will send a response to inform the server of the successful transaction with the message “true”. Otherwise, it means that the data has been tampered and the client will request the server to resend the message with “false”. The response and request messages are encrypted too.
 
-#### Password authentication
+#### Password Authentication
 The client needs to input their password to complete the transaction.
 
 If the password is transferred appropriately, the server will check the password whether is correct or not by comparing the received password with the pre-stored password of the client.
@@ -69,7 +69,7 @@ If the password doesn’t match, the server will inform the client of inputting 
 
 Then, the client will prompt the user to re-enter the password again.
 
-#### Random Session Key and Random RSA key pair
+#### Random Session Key and Random RSA Key Pair
 For different sessions (based on SSL record protocol and SSL handshake protocol), the session keys shared by the client and server are different. In the same session, for each transaction, the RSA key pairs of client and server are also different.
 
 This kind of mechanism can prevent attackers from sending permit packets intercepted from previous “client-server communication” to the server to conduct a fake transaction. The previous permit packet signed from an obsolete client private key could not be decrypted by the server with a new public key of the client, so the transaction would fail.
