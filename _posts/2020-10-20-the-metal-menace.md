@@ -12,7 +12,7 @@ comments: true
 This is a mini-game done during the DADIU program. The game mechanism is that the player uses a laser magnetic weapon to eliminate the robots for each level and either clear obstacles or bridge gaps with the magnetic on the way to the next level.
 
 ## Trailor
-<video width="740" height="480" controls>
+<video width="730" height="480" controls>
   <source src="/assets/video/the metal menace intro.mp4" type="video/mp4">
 Your browser does not support the video tag.
 </video>
