@@ -27,8 +27,6 @@ Export as usable animations
 Your browser does not support the video tag.
 </video>
 
-
-
 ## Motion matching
 ### Implementation logic
 - Predicted the real-time future trajectory of the character based on the player’s input and the character’s
@@ -42,20 +40,24 @@ neighbouring animation clips
 ### Demo
 This video shows the basic locomotion with using the motion matching system. The left subtitle is the real-time matching results. The right part is the real-time controller’s input. There are two lines in the demonstration. The line which is straighter, and smoother is the predicted trajectory, and the other line is the matched trajectory. Both of these two lines are relative to the characters’ current position and rotation
 
-https://user-images.githubusercontent.com/38242437/176313086-a0fcd9f1-1c2c-4207-9c83-0a30c4fc5ca0.mp4
+<video width="320" height="240" controls>
+  <source src="/assets/video/motion-matching-demo1.mp4" type="video/mp4">
+Your browser does not support the video tag.
+</video>
 
 This video is to show that the system can simulate the deceleration process
 
-https://user-images.githubusercontent.com/38242437/176312105-bef695dd-490e-4cae-a9b2-24f01b4e7de6.mp4
+<video width="320" height="240" controls>
+  <source src="/assets/video/motion-matching-demo2.mp4" type="video/mp4">
+Your browser does not support the video tag.
+</video>
 
-## Aurthor
-+ [Zaibei Li](https://www.linkedin.com/in/zaibei-eric-li/)
 
 ## Acknowledgement
+[DADIU](http://www.dadiu.dk/)  
 [Nicolas Simonsen](https://www.linkedin.com/in/nicklas-simonsen-443116201/)  
-https://www.gameanim.com/2016/05/03/motion-matching-ubisofts-honor/  
-https://montreal.ubisoft.com/en/introducing-learned-motion-matching/
-http://www.ipab.inf.ed.ac.uk/cgvu/deeplearningmotion.html  
-http://grail.cs.washington.edu/projects/motion-fields/  
-https://research.cs.wisc.edu/graphics/Gallery/kovar.vol/MoGraphs/
-http://www.dadiu.dk/
+[Ubisoft Motion Matching](https://www.gameanim.com/2016/05/03/motion-matching-ubisofts-honor/)  
+[Learned Motion Matching](https://montreal.ubisoft.com/en/introducing-learned-motion-matching/)  
+[Deep Learning Motion](http://www.ipab.inf.ed.ac.uk/cgvu/deeplearningmotion.html)    
+[Motion Fields](http://grail.cs.washington.edu/projects/motion-fields/)  
+[Motion Graphs](https://research.cs.wisc.edu/graphics/Gallery/kovar.vol/MoGraphs/)  
