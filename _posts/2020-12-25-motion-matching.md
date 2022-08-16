@@ -2,7 +2,7 @@
 layout: post
 title: A Unity-based Motion Matching System
 cover-img: /assets/img/the_bleeding_tree.png
-thumbnail-img: /assets/img/the_bleeding_tree.jpg
+thumbnail-img: /assets/img/the_bleeding_tree.png
 gh-repo: lizaibeim/motion-matching
 gh-badge: [star, fork, follow]
 tags: [Motion Matching, Game Development, C#]
