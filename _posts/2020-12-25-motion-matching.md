@@ -15,15 +15,19 @@ The [Motion Matching](https://www.gameanim.com/2016/05/03/motion-matching-ubisof
 
 ## Motion Caputre
 Record the mocap data  
-<video width="730" height="480" controls>
-  <source src="/assets/video/motion-matching-record.mp4" type="video/mp4">
-Your browser does not support the video tag.
-</video>  
+<div class="bkg">
+  <video class='vid' controls>
+    <source src="/assets/video/motion-matching-record.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+  </video>
+</div>
 Export as usable animations  
-<video width="730" height="480" controls>
-  <source src="/assets/video/motion-matching-animation.mp4" type="video/mp4">
-Your browser does not support the video tag.
-</video>
+<div class="bkg">
+  <video class='vid' controls>
+    <source src="/assets/video/motion-matching-animation.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+  </video>
+</div>
 
 ## Motion Matching
 ### Implementation Logic
@@ -36,22 +40,28 @@ neighbouring animation clips
 - Linearly combined the pose cost and trajectory cost and selected the optimal animation clip to transit
 
 ### Demo
-This video shows the basic locomotion with using the motion matching system. The left subtitle is the real-time matching results. The right part is the real-time controller’s input. There are two lines in the demonstration. The line which is straighter, and smoother is the predicted trajectory, and the other line is the matched trajectory. Both of these two lines are relative to the characters’ current position and rotation  
-<video width="730" height="480" controls>
-  <source src="/assets/video/motion-matching-demo1.mp4" type="video/mp4">
-Your browser does not support the video tag.
-</video>  
+This video shows the basic locomotion with using the motion matching system. The left subtitle is the real-time matching results. The right part is the real-time controller’s input. There are two lines in the demonstration. The line which is straighter, and smoother is the predicted trajectory, and the other line is the matched trajectory. Both of these two lines are relative to the characters’ current position and rotation
+<div class="bkg">
+  <video class='vid' controls>  
+    <source src="/assets/video/motion-matching-demo1.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+  </video>
+</div>  
 This video is to show that the system can simulate the deceleration process  
-<video width="730" height="480" controls>
-  <source src="/assets/video/motion-matching-demo2.mp4" type="video/mp4">
-Your browser does not support the video tag.
-</video>
+<div class="bkg">
+  <video class='vid' controls>
+    <source src="/assets/video/motion-matching-demo2.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+  </video>
+</div>
 
 ### In Game
-<video width="730" height="480" controls>
-  <source src="/assets/video/the-bleeding-tree-trailor.mp4" type="video/mp4">
-Your browser does not support the video tag.
-</video>
+<div class="bkg">
+  <video class='vid' controls>
+    <source src="/assets/video/the-bleeding-tree-trailor.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+  </video>
+</div>
 
 ## Acknowledgements
 [DADIU](http://www.dadiu.dk/)  
