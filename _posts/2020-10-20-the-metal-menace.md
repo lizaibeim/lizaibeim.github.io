@@ -1,7 +1,7 @@
 ---
 layout: post
 title: The Metal Menace
-cover-img: /assets/img/the metal menace intro.jpg
+cover-img: /assets/img/the-metal-menace-bg.jpg
 thumbnail-img: /assets/img/the metal menace intro.jpg
 gh-repo: lizaibeim/the-metal-menace
 gh-badge: [star, fork, follow]
@@ -13,8 +13,8 @@ This is a mini-game done during the DADIU program. The game mechanism is that th
 
 ## Trailor
 <div class="video-container">
-  <video width="730" height="480" controls>
-    <source src="/assets/video/the metal menace intro.mp4" type="video/mp4">
+  <video controls>
+    <source src="/assets/video/the metal menace intro.mp4" type="video/mp4"/>
   </video>
 </div>
 
