@@ -15,7 +15,7 @@ The [Motion Matching](https://www.gameanim.com/2016/05/03/motion-matching-ubisof
 
 ## Motion Caputre
 Record the mocap data  
-<video width=100% height=auto controls>  
+<video width=100% controls>  
   <source src="/assets/video/motion-matching-record.mp4" type="video/mp4">
 Your browser does not support the video tag.
 </video>  
