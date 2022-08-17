@@ -22,7 +22,7 @@ If you are interested in this project and want to try it by yourself in a real e
 <body>
     <style>.box {  }; </style>
     <div align="left" class="box">
-                <div align="left" id="b8d0bfa257454f2db71368dcbc3f7dfa" class="chart-container" style="width:370px; height:300px;"></div>
+                <div align="left" id="b8d0bfa257454f2db71368dcbc3f7dfa" class="chart-container" style="width:365px; height:250px;"></div>
     <script>
         var chart_b8d0bfa257454f2db71368dcbc3f7dfa = echarts.init(
             document.getElementById('b8d0bfa257454f2db71368dcbc3f7dfa'), 'white', {renderer: 'canvas'});
@@ -1582,7 +1582,7 @@ If you are interested in this project and want to try it by yourself in a real e
 };
         chart_b8d0bfa257454f2db71368dcbc3f7dfa.setOption(option_b8d0bfa257454f2db71368dcbc3f7dfa);
     </script>
-<br/>                <div align="left" id="6ec60864f5cf41d08eb031630590cdb6" class="chart-container" style="width:370px; height:370px;"></div>
+<br/>                <div align="left" id="6ec60864f5cf41d08eb031630590cdb6" class="chart-container" style="width:365px; height:365px;"></div>
     <script>
         var chart_6ec60864f5cf41d08eb031630590cdb6 = echarts.init(
             document.getElementById('6ec60864f5cf41d08eb031630590cdb6'), 'white', {renderer: 'canvas'});
