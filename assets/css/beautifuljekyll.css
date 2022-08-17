@@ -751,8 +751,7 @@ nav.top-nav-short-permanent ~ header > .intro-header.big-img {
   display: flex;
   align-items: stretch;
   justify-content: center;
-  max-height: 480px;
-  height: auto;
+  /* max-height: 480px; */
   width: 100%;
   overflow: hidden;
   margin: 0 auto;
