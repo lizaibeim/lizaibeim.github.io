@@ -13,9 +13,8 @@ This is a mini-game done during the DADIU program. The game mechanism is that th
 
 ## Trailor
 <div class="video-container">
-  <video width="730" height="480" controls>
-    <source src="/assets/video/the metal menace intro.mp4" type="video/mp4">
-  Your browser does not support the video tag.
+  <video>
+    <source src="/assets/video/the metal menace intro.mp4" type="video/mp4"/>
   </video>
 </div>
 
