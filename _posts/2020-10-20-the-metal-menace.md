@@ -13,7 +13,7 @@ This is a mini-game done during the DADIU program. The game mechanism is that th
 
 ## Trailor
 <div class="bkg">
-  <video class='vid' autoplay muted loop playsinline>
+  <video class='vid' controls>
     <source src="/assets/video/the metal menace intro.mp4" type="video/mp4">
   </video>
 </div>
