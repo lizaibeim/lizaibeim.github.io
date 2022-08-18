@@ -9,7 +9,7 @@ tags: [Game Development, C#]
 comments: true
 ---
 
-The metal menace is a Unity-based puzzle solving \& adventure game done during the DADIU program. The game mechanism is that the player uses a laser magnetic weapon to eliminate the robots for each level and either clear obstacles or bridge gaps with the magnetic on the way to the next level.
+The metal menace is a Unity-based puzzle solving & adventure game done during the DADIU program. The game mechanism is that the player uses a laser magnetic weapon to eliminate the robots for each level and either clear obstacles or bridge gaps with the magnetic on the way to the next level.
 
 ## Trailor
 <div class="bkg">
