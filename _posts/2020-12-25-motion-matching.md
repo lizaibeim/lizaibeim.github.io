@@ -34,7 +34,7 @@ Export as usable animations
 - Predicted the real-time future trajectory of the character based on the player’s input and the character’s
 historical movement trajectory
 - Selected predicted future trajectory’s K nearest neighboring animation clips from motion capture database
-based on Frechet distance ´
+based on Fréchet distance
 - Calculated the cosine similarity between the current character’s pose and the starting pose of the nearest
 neighbouring animation clips
 - Linearly combined the pose cost and trajectory cost and selected the optimal animation clip to transit
