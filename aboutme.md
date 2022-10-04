@@ -4,7 +4,7 @@ title: ABOUT ME
 
 ---
 
-<img src="/assets/img/portrait.jpg" alt="portrait" width="400" class="center"/>  
+<img src="/assets/img/portrait.png" alt="portrait" width="400" class="center"/>  
 
 Hi! I'm a technically minded software developer with expertise in Java, JavaScript, C#, and Python. Recently, I graduated from the University of Copenhagen with a master's degree in Computer Science. Before, I received my bachelor's degree in Computing with Upper Second Class Honours from the Hong Kong Polytechnic University in 2019.
 
