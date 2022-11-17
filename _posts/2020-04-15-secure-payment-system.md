@@ -20,7 +20,7 @@ SSL Record Protocol is based on the secure transaction protocol (e.g., TCP), pro
   2.	Encrypt data to prevent data from being seen in the middle;
   3.	Maintain data integrity and ensure that data is not changed during transmission.
 
-In our online payment system implementation, we first use Java keytool to generate certificates of client and server. Then, we export them out and import them into the other’s key store. The certificates are used for later RSA encryption algorithms· We use Java SSL package (javax.net.ssl) to implement the authentication of client and server.
+In our online payment system implementation, we first use Java keytool to generate certificates of client and server. Then, we export them out and import them into the other’s key store. The certificates are used for later RSA encryption algorithms. We use Java SSL package (javax.net.ssl) to implement the authentication of client and server.
 
   1.	The client sends ClientHello message to the server. The message includes supported signature algorithms and so on.  
   2.	The server responds via a ServerHello message and notifies one of the signature algorithms (SHA256withRSA in this demo case) chosen from the signature algorithms supported by the client.  
