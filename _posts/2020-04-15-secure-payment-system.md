@@ -5,7 +5,7 @@ cover-img: /assets/img/secure-payment-system.jpg
 thumbnail-img: /assets/img/secure-payment-system.jpg
 gh-repo: lizaibeim/secure-payment-system
 gh-badge: [star, fork, follow]
-tags: [Java, Cryptography]
+tags: [Java, Cryptography, Computer Security]
 comments: true
 ---
 
