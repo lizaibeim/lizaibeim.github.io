@@ -47,13 +47,13 @@ This page lists my research publications, including journal articles, conference
 
 ## Workshops and Others
 
-- **Workshop Paper**: ["MBOX Lightweight Voice Analysis Sensors for MMLA"](https://drive.google.com/file/d/1ckd8bfFPbmjJuHyHjS_49dTpuDeKLhU_/view)
+- **Workshop Paper**: ["MBOX Lightweight Voice Analysis Sensors for MMLA"](./pubs/CROSSMMLA22_paper_5.pdf)
     - **Authors**: Daniel Spikol, Zaibei Li, Sergio Serrano-Iglesias, Hamza Ouhaichi and Bahtijar Vogel
     - **Event**: [CROSSMMLA & SLE Workshop: Learning Analytics for Smart LearningEnvironments Crossing Physical and Virtual Learning Spaces](https://sites.google.com/view/crossmmla/home?authuser=0), LAK 22, Online, Mar 2022.
     - **Abstract**: This abstracts presents MBOX, a scalable and lightweight system that integrates data collection, data analysis and instructive feedback to evaluate participants' engagement levels of learning activities.
     <!-- - **[Additional Resources](https://linktoadditionalresources.com)** -->
 
-- **Workshop Paper**: ["Challenges of the adoption of MultiModal Learning Analytics in Smart Learning Environments"](https://drive.google.com/file/d/1ckd8bfFPbmjJuHyHjS_49dTpuDeKLhU_/view)
+- **Workshop Paper**: ["Challenges of the adoption of MultiModal Learning Analytics in Smart Learning Environments"](./pubs/CROSSMMLA22_paper_2.pdf)
     - **Authors**: Sergio Serrano-Iglesias, Daniel Spikol, Miguel L. Bote-Lorenzo, Eduardo Gómez-Sánchez and Zaibei Li
     - **Event**: [CROSSMMLA & SLE Workshop: Learning Analytics for Smart LearningEnvironments Crossing Physical and Virtual Learning Spaces](https://sites.google.com/view/crossmmla/home?authuser=0), LAK 22, Online, Mar 2022.
     - **Abstract**: This abstract explores such challenges in the context of the integration of MBOX (Multimodal Box), a lightweight toolbox for collecting human interactions for collaborative learning scenarios, and SCARLETT (Smart Context-Aware Recommendation of Learning Extensions in ubiquiTous seTtings), an SLE designed to facilitated the management and coordination of multiple learning environments across spaces to deploy personalized recommendations [3].
