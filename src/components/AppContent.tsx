@@ -264,8 +264,9 @@ export const AppContent: React.FC = () => {
       {/* Section 2: About */}
       <section id="about" className="relative min-h-screen flex items-center p-8 md:p-16 pointer-events-auto">
         <div className="max-w-2xl">
-          <h2 className="font-display italic text-4xl md:text-5xl text-white/80 font-light mb-12 leading-tight">
-            Decoding cognition.
+          <h2 className="font-display italic text-4xl md:text-5xl text-white/80 font-light mb-12 leading-tight flex items-baseline gap-4">
+            <span className="font-sans not-italic text-2xl md:text-3xl text-white/40 tracking-widest">你好,</span>
+            Hello.
           </h2>
           <div className="space-y-8 text-xs md:text-sm text-white/50 font-light tracking-widest leading-loose uppercase">
             <p>

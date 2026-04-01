@@ -53,23 +53,10 @@ export const ParticleBackground: React.FC = () => {
       }
     };
 
-    let prevScrollProgress = 0;
-
     const animate = () => {
-      // Clear canvas completely when transitioning between sections to prevent smudge mixing
-      if ((prevScrollProgress < 0.5 && scrollProgress >= 0.5) || 
-          (prevScrollProgress >= 0.5 && scrollProgress < 0.5)) {
-        ctx.fillStyle = '#030303';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-      }
-      prevScrollProgress = scrollProgress;
-
-      // The user specifically requested to KEEP the smudge buildup effect.
-      // We transition the smudge color from dark gray (home) to dark purple (scroll)
-      let bgR = Math.floor(3 + scrollProgress * 9);  // 3 -> 12
-      let bgG = Math.floor(3 + scrollProgress * 2);  // 3 -> 5
-      let bgB = Math.floor(3 + scrollProgress * 22); // 3 -> 25
-      ctx.fillStyle = `rgba(${bgR}, ${bgG}, ${bgB}, 0.08)`;
+      // The user specifically requested to KEEP the "gray smudge" buildup effect
+      // because they find it interesting. Using 0.08 creates that long, lingering trail.
+      ctx.fillStyle = 'rgba(3, 3, 3, 0.08)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       time += 1;
@@ -98,20 +85,54 @@ export const ParticleBackground: React.FC = () => {
         let focusX = Math.cos(angle) * focusRadius;
         let focusY = Math.sin(angle) * focusRadius;
 
-        // State 3: Stable Flower / Mandala (Scroll structured)
+        // HOME (0)
+        let homeX = target.x + (wanderX * (1 - focusLerp)) + (focusX * focusLerp);
+        let homeY = target.y + (wanderY * (1 - focusLerp)) + (focusY * focusLerp);
+
+        // ABOUT (1) - DNA / Figure 8
+        let aboutCX = canvas.width * 0.75;
+        let aboutCY = canvas.height * 0.5;
+        let aboutT = time * 0.02 + (index * 0.5);
+        let aboutX = aboutCX + Math.sin(aboutT) * 150;
+        let aboutY = aboutCY + Math.sin(aboutT * 2) * 150;
+
+        // PROJECTS (2) - Orbiting Rings
+        let projCX = canvas.width * 0.5;
+        let projCY = canvas.height * 0.5;
+        let projAngle = time * 0.01 * (index % 2 === 0 ? 1 : -1) + (index * Math.PI / numStrands);
+        let projRadius = 250 + Math.sin(time * 0.05 + index) * 50;
+        let projX = projCX + Math.cos(projAngle) * projRadius;
+        let projY = projCY + Math.sin(projAngle) * projRadius;
+
+        // RESUME (3) - Stable Flower / Mandala
         let flowerCX = canvas.width * 0.75; 
         let flowerCY = canvas.height * 0.5;
         let flowerAngle = (index / numStrands) * Math.PI * 2 + time * 0.001;
-        let petalRadius = 120 + Math.sin(time * 0.02 + index) * 15;
+        let petalRadius = 150 + Math.sin(time * 0.02 + index) * 20;
         let flowerX = flowerCX + Math.cos(flowerAngle) * petalRadius;
         let flowerY = flowerCY + Math.sin(flowerAngle) * petalRadius;
 
-        // Blend states based on focus and scroll
-        let currentTargetX = target.x + (wanderX * (1 - focusLerp)) + (focusX * focusLerp);
-        let currentTargetY = target.y + (wanderY * (1 - focusLerp)) + (focusY * focusLerp);
+        // Interpolate between the 4 states based on scroll section (0 to 3)
+        let section = scrollProgress * 3;
+        let targetX = 0;
+        let targetY = 0;
 
-        head.x = currentTargetX * (1 - scrollProgress) + flowerX * scrollProgress;
-        head.y = currentTargetY * (1 - scrollProgress) + flowerY * scrollProgress;
+        if (section < 1) {
+            let t = section;
+            targetX = homeX * (1 - t) + aboutX * t;
+            targetY = homeY * (1 - t) + aboutY * t;
+        } else if (section < 2) {
+            let t = section - 1;
+            targetX = aboutX * (1 - t) + projX * t;
+            targetY = aboutY * (1 - t) + projY * t;
+        } else {
+            let t = section - 2;
+            targetX = projX * (1 - t) + flowerX * t;
+            targetY = projY * (1 - t) + flowerY * t;
+        }
+
+        head.x = targetX;
+        head.y = targetY;
 
         // Spring stiffness
         let stiffness = 0.25 * (1 - focusLerp) + 0.6 * focusLerp;
@@ -129,12 +150,7 @@ export const ParticleBackground: React.FC = () => {
           curr.y += dy * stiffness;
         }
 
-        // Color Morphing: White -> Bioluminescent Purple (Tailwind purple-400: 167, 139, 250)
-        let r = Math.floor(255 - (scrollProgress * (255 - 167)));
-        let g = Math.floor(255 - (scrollProgress * (255 - 139)));
-        let b = Math.floor(255 - (scrollProgress * (255 - 250)));
-
-        // Draw the continuous strand
+        // Draw the continuous strand (White/Gray)
         ctx.beginPath();
         ctx.moveTo(strand.segments[0].x, strand.segments[0].y);
         for (let i = 1; i < numSegments; i++) {
@@ -144,17 +160,18 @@ export const ParticleBackground: React.FC = () => {
         }
         
         let alpha = 0.15 - (index * 0.005) + (focusLerp * 0.2);
-        alpha = alpha * (1 - scrollProgress * 0.6); 
         
-        ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
-        ctx.lineWidth = (strand.thickness + (focusLerp * 1)) * (1 - scrollProgress * 0.5);
+        ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
+        ctx.lineWidth = strand.thickness + (focusLerp * 1);
         ctx.stroke();
 
-        // Draw subtle "chain links" or "sensor nodes" along the strand
+        // Draw subtle "chain links" or "sensor nodes" along the strand (Purple)
         for (let i = 0; i < numSegments; i += 6) {
           ctx.beginPath();
-          ctx.arc(strand.segments[i].x, strand.segments[i].y, 1 + (focusLerp * 0.5), 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${(0.4 - (i / numSegments) * 0.4 + (focusLerp * 0.3)) * (1 - scrollProgress * 0.6)})`;
+          ctx.arc(strand.segments[i].x, strand.segments[i].y, 1.5 + (focusLerp * 0.5), 0, Math.PI * 2);
+          let nodeAlpha = 0.5 - (i / numSegments) * 0.4 + (focusLerp * 0.3);
+          // Tailwind purple-400: 167, 139, 250
+          ctx.fillStyle = `rgba(167, 139, 250, ${nodeAlpha})`;
           ctx.fill();
         }
       });
@@ -172,9 +189,12 @@ export const ParticleBackground: React.FC = () => {
       mouse.y = canvas.height / 2;
     };
 
+    const scrollContainer = document.getElementById('main-scroll-container');
+
     const handleScroll = () => {
-      const maxScroll = window.innerHeight;
-      scrollProgress = Math.min(window.scrollY / maxScroll, 1);
+      if (!scrollContainer) return;
+      const maxScroll = scrollContainer.scrollHeight - scrollContainer.clientHeight;
+      scrollProgress = maxScroll > 0 ? Math.min(scrollContainer.scrollTop / maxScroll, 1) : 0;
     };
 
     const handleResize = () => {
@@ -188,7 +208,7 @@ export const ParticleBackground: React.FC = () => {
 
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseleave', handleMouseLeave);
-    window.addEventListener('scroll', handleScroll);
+    if (scrollContainer) scrollContainer.addEventListener('scroll', handleScroll);
     window.addEventListener('resize', handleResize);
     window.addEventListener('set-focus', handleSetFocus);
     
@@ -198,7 +218,7 @@ export const ParticleBackground: React.FC = () => {
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseleave', handleMouseLeave);
-      window.removeEventListener('scroll', handleScroll);
+      if (scrollContainer) scrollContainer.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('set-focus', handleSetFocus);
       cancelAnimationFrame(animationFrameId);
