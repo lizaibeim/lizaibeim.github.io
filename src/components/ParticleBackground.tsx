@@ -25,6 +25,7 @@ export const ParticleBackground: React.FC = () => {
     let isFocused = false;
     let focusLerp = 0;
     let scrollProgress = 0;
+    let maxScrollProgressSeen = 0; // To trigger a one-time wipe
 
     const init = () => {
       canvas.width = window.innerWidth;
@@ -54,10 +55,21 @@ export const ParticleBackground: React.FC = () => {
     };
 
     const animate = () => {
-      // The user specifically requested to KEEP the "gray smudge" buildup effect
-      // because they find it interesting. Using 0.08 creates that long, lingering trail.
-      ctx.fillStyle = 'rgba(3, 3, 3, 0.08)';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      let notHomeFactor = Math.min(1, scrollProgress * 4);
+
+      // Detect when we transition out of HOME (e.g. scrollProgress crosses 0.05)
+      // and do a ONE-TIME aggressive clear to wipe the "gray coating" from the home page.
+      if (scrollProgress > 0.05 && maxScrollProgressSeen <= 0.05) {
+        ctx.fillStyle = '#030303';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      } else {
+        // Normal trailing mechanism: fillAlpha = 0.08 creates the beautiful long trails.
+        let fillAlpha = 0.08; 
+        ctx.fillStyle = `rgba(3, 3, 3, ${fillAlpha})`;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+      
+      maxScrollProgressSeen = Math.max(maxScrollProgressSeen, scrollProgress);
 
       time += 1;
 
@@ -165,13 +177,18 @@ export const ParticleBackground: React.FC = () => {
         ctx.lineWidth = strand.thickness + (focusLerp * 1);
         ctx.stroke();
 
-        // Draw subtle "chain links" or "sensor nodes" along the strand (Purple)
+        // Draw subtle "chain links" or "sensor nodes" along the strand
         for (let i = 0; i < numSegments; i += 6) {
           ctx.beginPath();
           ctx.arc(strand.segments[i].x, strand.segments[i].y, 1.5 + (focusLerp * 0.5), 0, Math.PI * 2);
           let nodeAlpha = 0.5 - (i / numSegments) * 0.4 + (focusLerp * 0.3);
-          // Tailwind purple-400: 167, 139, 250
-          ctx.fillStyle = `rgba(167, 139, 250, ${nodeAlpha})`;
+          
+          // White on HOME, Purple (167, 139, 250) on other pages
+          let r = 255 - notHomeFactor * (255 - 167);
+          let g = 255 - notHomeFactor * (255 - 139);
+          let b = 255 - notHomeFactor * (255 - 250);
+
+          ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${nodeAlpha})`;
           ctx.fill();
         }
       });

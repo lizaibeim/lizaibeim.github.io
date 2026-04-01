@@ -369,7 +369,7 @@ export const AppContent: React.FC = () => {
             </div>
           </div>
           <div className="flex flex-wrap gap-4">
-            <a href="https://lizaibeim.github.io" target="_blank" rel="noreferrer" className="text-[10px] text-white/50 hover:text-white tracking-[0.2em] uppercase transition-colors">lizaibeim.github.io</a>
+            <a href="https://www.linkedin.com/in/zaibei-eric-li/" target="_blank" rel="noreferrer" className="text-[10px] text-white/50 hover:text-white tracking-[0.2em] uppercase transition-colors">LinkedIn</a>
             <span className="text-white/20 hidden md:inline">|</span>
             <a href="/Zaibei_s_CV.pdf" download="Zaibei_s_CV.pdf" className="text-[10px] text-white/50 hover:text-white tracking-[0.2em] uppercase transition-colors">Download Full CV</a>
           </div>
