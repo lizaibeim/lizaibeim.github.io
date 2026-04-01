@@ -56,9 +56,9 @@ export const AppContent: React.FC = () => {
   // Manage Ambient Drone Volume based on active section
   useEffect(() => {
     if (gainNodeRef.current && audioCtxRef.current) {
-      // Only play drone loudly on home page
-      const targetGain = (activeSection === 'home' && audioEnabled) ? 0.4 : 0.0;
-      gainNodeRef.current.gain.setTargetAtTime(targetGain, audioCtxRef.current.currentTime, 2);
+      // Much quieter, peaceful drone
+      const targetGain = (activeSection === 'home' && audioEnabled) ? 0.05 : 0.0;
+      gainNodeRef.current.gain.setTargetAtTime(targetGain, audioCtxRef.current.currentTime, 3);
     }
   }, [activeSection, audioEnabled]);
 
@@ -73,23 +73,36 @@ export const AppContent: React.FC = () => {
       masterGain.connect(ctx.destination);
       gainNodeRef.current = masterGain;
 
-      // Frequencies for a deep, ethereal chord (A major 7ish)
-      const freqs = [110, 164.81, 220, 277.18]; 
-      freqs.forEach(freq => {
+      // Ethereal, floating frequencies pitched down for comfort (Fmaj9 add6: F2, C3, E3, G3, A3)
+      // Lower pitches and softer tones to avoid high-frequency fatigue
+      const freqs = [87.31, 130.81, 164.81, 196.00, 220.00]; 
+      freqs.forEach((freq, i) => {
         const osc = ctx.createOscillator();
-        osc.type = 'sine';
+        osc.type = 'triangle'; // Triangle wave for a warmer, softer synth-pad texture
         osc.frequency.value = freq;
         
+        // Lowpass filter to remove harsh high frequencies and make it sound distant/dreamy
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.value = freq * 1.5;
+        
+        const oscGain = ctx.createGain();
+        oscGain.gain.value = 0.015; // Very quiet base volume
+        
+        // LFO to create a "breathing" or "tide" effect (amplitude modulation)
         const lfo = ctx.createOscillator();
         lfo.type = 'sine';
-        lfo.frequency.value = 0.05 + Math.random() * 0.05; // Very slow modulation
+        lfo.frequency.value = 0.02 + (i * 0.01); // Each note breathes at a slightly different, very slow rate
         
         const lfoGain = ctx.createGain();
-        lfoGain.gain.value = 0.15;
+        lfoGain.gain.value = 0.01; // Depth of the breath
         
-        lfo.connect(lfoGain.gain);
-        osc.connect(lfoGain);
-        lfoGain.connect(masterGain);
+        lfo.connect(lfoGain);
+        lfoGain.connect(oscGain.gain);
+        
+        osc.connect(filter);
+        filter.connect(oscGain);
+        oscGain.connect(masterGain);
         
         osc.start();
         lfo.start();
@@ -104,69 +117,91 @@ export const AppContent: React.FC = () => {
     }
   };
 
-  // Play a soft, piano-like generative chord when focusing
-  const playPianoChime = () => {
+  // Play a delicate glass wind chime sound when focusing
+  const playWindChime = () => {
     if (!audioCtxRef.current || !audioEnabled || activeSection !== 'home') return;
     const ctx = audioCtxRef.current;
     const t = ctx.currentTime;
     
-    // Emaj9 chord frequencies for a dreamy, resolving sound
-    const freqs = [329.63, 415.30, 493.88, 622.25, 739.99];
+    // High-pitched pentatonic scale (C6, D6, E6, G6, A6) for glass/metal wind chimes
+    const baseFreqs = [1046.50, 1174.66, 1318.51, 1567.98, 1760.00];
     
-    freqs.forEach((freq, i) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
+    // Randomly pick 2 to 3 notes to simulate a gentle breeze hitting the chimes
+    const numChimes = 2 + Math.floor(Math.random() * 2);
+    
+    for (let i = 0; i < numChimes; i++) {
+      const freq = baseFreqs[Math.floor(Math.random() * baseFreqs.length)];
+      const delay = Math.random() * 0.15; // Random stagger for realism
+      const startTime = t + delay;
       
-      osc.type = 'sine';
-      osc.frequency.value = freq;
+      // Fundamental tone (the main ring)
+      const osc1 = ctx.createOscillator();
+      osc1.type = 'sine';
+      osc1.frequency.value = freq;
       
-      gain.gain.setValueAtTime(0, t);
-      // Stagger the attack slightly for a rolled chord (arpeggio) effect
-      const attackTime = t + 0.05 + (i * 0.06);
-      gain.gain.linearRampToValueAtTime(0.06, attackTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, attackTime + 3);
+      // Overtone (gives the metallic/glass "clink" at the start)
+      const osc2 = ctx.createOscillator();
+      osc2.type = 'sine';
+      osc2.frequency.value = freq * 2.76; 
       
-      osc.connect(gain);
-      gain.connect(ctx.destination);
+      const gainNode = ctx.createGain();
+      gainNode.gain.setValueAtTime(0, startTime);
+      // Extremely sharp attack for the strike
+      gainNode.gain.linearRampToValueAtTime(0.015, startTime + 0.005);
+      // Long, shimmering exponential decay
+      gainNode.gain.exponentialRampToValueAtTime(0.0001, startTime + 3);
       
-      osc.start(t);
-      osc.stop(attackTime + 3);
-    });
+      const overtoneGain = ctx.createGain();
+      overtoneGain.gain.setValueAtTime(0, startTime);
+      overtoneGain.gain.linearRampToValueAtTime(0.008, startTime + 0.002);
+      overtoneGain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.3); // Overtone dies out fast
+      
+      osc1.connect(gainNode);
+      osc2.connect(overtoneGain);
+      
+      gainNode.connect(ctx.destination);
+      overtoneGain.connect(ctx.destination);
+      
+      osc1.start(startTime);
+      osc2.start(startTime);
+      osc1.stop(startTime + 3);
+      osc2.stop(startTime + 0.3);
+    }
   };
 
   const setFocus = (focused: boolean) => {
     window.dispatchEvent(new CustomEvent('set-focus', { detail: { focused } }));
     if (focused) {
-      playPianoChime();
+      playWindChime();
     }
   };
 
   return (
-    <div className="relative z-10 w-full pointer-events-none mix-blend-screen">
-      
+    <>
       {/* Fixed UI Layer */}
-      <div className="fixed top-8 left-8 md:left-16 z-50 pointer-events-auto">
+      <header className="fixed top-6 left-6 right-6 md:top-8 md:left-16 md:right-16 z-50 pointer-events-auto flex flex-wrap justify-between items-center gap-y-4 mix-blend-screen">
         <button 
           onClick={toggleAudio}
-          className="text-[10px] md:text-xs text-white/50 hover:text-white transition-colors tracking-[0.2em] uppercase"
+          className="text-[10px] md:text-xs text-white/50 hover:text-white transition-colors tracking-[0.2em] uppercase whitespace-nowrap"
         >
           [ SOUND: {audioEnabled ? 'ON' : 'OFF'} ]
         </button>
-      </div>
 
-      <nav className="fixed top-8 right-8 md:right-16 z-50 pointer-events-auto flex gap-6 md:gap-12 text-[10px] md:text-xs tracking-[0.2em] uppercase">
-        {['home', 'about', 'projects', 'resume'].map((sec) => (
-          <a 
-            key={sec}
-            href={`#${sec}`} 
-            className={`transition-all duration-500 ${activeSection === sec ? 'text-white font-medium drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]' : 'text-white/30 hover:text-white/80'}`}
-          >
-            {sec}
-          </a>
-        ))}
-      </nav>
+        <nav className="flex gap-4 md:gap-12 text-[10px] md:text-xs tracking-[0.2em] uppercase flex-wrap justify-end">
+          {['home', 'about', 'projects', 'resume'].map((sec) => (
+            <a 
+              key={sec}
+              href={`#${sec}`} 
+              className={`transition-all duration-500 ${activeSection === sec ? 'text-white font-medium drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]' : 'text-white/30 hover:text-white/80'}`}
+            >
+              {sec}
+            </a>
+          ))}
+        </nav>
+      </header>
 
-      {/* Section 1: Home (Stream of Consciousness) */}
+      <div className="relative z-10 w-full pointer-events-none mix-blend-screen">
+        {/* Section 1: Home (Stream of Consciousness) */}
       <section id="home" className="relative h-screen flex flex-col justify-between p-8 md:p-16">
         <motion.div
           initial={{ opacity: 0, y: -10 }}
@@ -179,9 +214,6 @@ export const AppContent: React.FC = () => {
           <h1 className="text-sm md:text-base font-light tracking-[0.3em] mb-2 text-white/90 uppercase flex items-center gap-3">
             Zaibei Li <span className="text-white/40 text-xs tracking-widest font-sans">李再倍</span>
           </h1>
-          <p className="text-[10px] md:text-xs text-white/40 tracking-[0.2em] uppercase">
-            Multimodal Learning Analytics
-          </p>
         </motion.div>
 
         <motion.div
@@ -344,5 +376,6 @@ export const AppContent: React.FC = () => {
       </section>
 
     </div>
+    </>
   );
 };

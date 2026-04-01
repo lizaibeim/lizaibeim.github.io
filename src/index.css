@@ -11,7 +11,7 @@
 
 html {
   scroll-behavior: smooth;
-  scroll-snap-type: y mandatory; /* Enable vertical scroll snapping */
+  scroll-snap-type: y mandatory;
 }
 
 body {
@@ -19,12 +19,14 @@ body {
   color: var(--color-ink);
   font-family: var(--font-sans);
   margin: 0;
+}
+
+#root {
   overflow-x: hidden;
 }
 
 section {
-  scroll-snap-align: start; /* Snap to the top of each section */
-  scroll-snap-stop: always; /* Force stop at each section */
+  scroll-snap-align: start;
 }
 
 /* Smooth text rendering */

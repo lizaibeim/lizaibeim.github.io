@@ -53,9 +53,23 @@ export const ParticleBackground: React.FC = () => {
       }
     };
 
+    let prevScrollProgress = 0;
+
     const animate = () => {
-      // Very soft clear for a long, ethereal trail effect
-      ctx.fillStyle = 'rgba(3, 3, 3, 0.08)';
+      // Clear canvas completely when transitioning between sections to prevent smudge mixing
+      if ((prevScrollProgress < 0.5 && scrollProgress >= 0.5) || 
+          (prevScrollProgress >= 0.5 && scrollProgress < 0.5)) {
+        ctx.fillStyle = '#030303';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+      prevScrollProgress = scrollProgress;
+
+      // The user specifically requested to KEEP the smudge buildup effect.
+      // We transition the smudge color from dark gray (home) to dark purple (scroll)
+      let bgR = Math.floor(3 + scrollProgress * 9);  // 3 -> 12
+      let bgG = Math.floor(3 + scrollProgress * 2);  // 3 -> 5
+      let bgB = Math.floor(3 + scrollProgress * 22); // 3 -> 25
+      ctx.fillStyle = `rgba(${bgR}, ${bgG}, ${bgB}, 0.08)`;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       time += 1;
