@@ -331,7 +331,7 @@ export const AppContent: React.FC = () => {
           <div className="flex flex-wrap gap-4">
             <a href="https://lizaibeim.github.io" target="_blank" rel="noreferrer" className="text-[10px] text-white/50 hover:text-white tracking-[0.2em] uppercase transition-colors">lizaibeim.github.io</a>
             <span className="text-white/20 hidden md:inline">|</span>
-            <a href="/Zaibei_Li_CV.pdf" download="Zaibei_Li_CV.pdf" className="text-[10px] text-white/50 hover:text-white tracking-[0.2em] uppercase transition-colors">Download Full CV</a>
+            <a href="/Zaibei_s_CV.pdf" download="Zaibei_s_CV.pdf" className="text-[10px] text-white/50 hover:text-white tracking-[0.2em] uppercase transition-colors">Download Full CV</a>
           </div>
         </div>
       </section>
