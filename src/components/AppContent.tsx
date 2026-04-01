@@ -256,25 +256,25 @@ export const AppContent: React.FC = () => {
           <div className="flex overflow-x-auto snap-x snap-mandatory gap-8 md:gap-16 pb-8 hide-scrollbar w-full">
             
             {/* Project 1 */}
-            <div className="snap-start shrink-0 w-[85vw] md:w-[40vw] border-t border-white/10 pt-8 group cursor-pointer">
+            <a href="https://github.com/ucph-ccs/OpenMMLA" target="_blank" rel="noreferrer" className="snap-start shrink-0 w-[85vw] md:w-[40vw] border-t border-white/10 pt-8 group cursor-pointer block">
               <div className="text-[10px] text-white/30 tracking-[0.2em] uppercase mb-4">Toolkit // IoT & Analytics</div>
               <h3 className="text-xl text-white/80 font-light tracking-widest uppercase mb-4 group-hover:text-white transition-colors">OpenMMLA</h3>
               <p className="text-xs text-white/40 leading-loose tracking-widest uppercase">An open-source multimodal data collection toolkit for learning analytics. Awarded Best Short Paper at LAK '25.</p>
-            </div>
+            </a>
             
             {/* Project 2 */}
-            <div className="snap-start shrink-0 w-[85vw] md:w-[40vw] border-t border-white/10 pt-8 group cursor-pointer">
+            <a href="https://github.com/lizaibeim/motion-matching" target="_blank" rel="noreferrer" className="snap-start shrink-0 w-[85vw] md:w-[40vw] border-t border-white/10 pt-8 group cursor-pointer block">
               <div className="text-[10px] text-white/30 tracking-[0.2em] uppercase mb-4">System // C# & Unity</div>
               <h3 className="text-xl text-white/80 font-light tracking-widest uppercase mb-4 group-hover:text-white transition-colors">MotionMatching</h3>
               <p className="text-xs text-white/40 leading-loose tracking-widest uppercase">A real-time motion matching system developed on Unity, designed to capture and analyze complex human movements.</p>
-            </div>
+            </a>
 
             {/* Project 3 */}
-            <div className="snap-start shrink-0 w-[85vw] md:w-[40vw] border-t border-white/10 pt-8 group cursor-pointer">
+            <a href="https://github.com/lizaibeim/casper-ffg" target="_blank" rel="noreferrer" className="snap-start shrink-0 w-[85vw] md:w-[40vw] border-t border-white/10 pt-8 group cursor-pointer block">
               <div className="text-[10px] text-white/30 tracking-[0.2em] uppercase mb-4">Algorithm // Python</div>
               <h3 className="text-xl text-white/80 font-light tracking-widest uppercase mb-4 group-hover:text-white transition-colors">CasperFFG</h3>
               <p className="text-xs text-white/40 leading-loose tracking-widest uppercase">A Python implementation of the CasperFFG consensus combined with PoW consensus on a simulated blockchain.</p>
-            </div>
+            </a>
 
           </div>
         </div>
@@ -314,14 +314,21 @@ export const AppContent: React.FC = () => {
             <div className="text-[10px] text-white/30 tracking-[0.2em] uppercase border-b border-white/10 pb-4 mb-6">2019</div>
             <h3 className="text-sm text-white/80 tracking-widest uppercase mb-2">Bachelor of Science</h3>
             <p className="text-xs text-white/40 leading-loose tracking-widest uppercase mb-4">Hong Kong Polytechnic University</p>
-            <p className="text-[10px] text-white/30 leading-relaxed tracking-wider">Information Technology. IT Consultant at Yonyou.</p>
+            <p className="text-[10px] text-white/30 leading-relaxed tracking-wider">Information Technology.</p>
+          </div>
+
+          <div className="snap-start shrink-0 w-[70vw] md:w-[25vw] flex flex-col">
+            <div className="text-[10px] text-white/30 tracking-[0.2em] uppercase border-b border-white/10 pb-4 mb-6">2017</div>
+            <h3 className="text-sm text-white/80 tracking-widest uppercase mb-2">Exchange</h3>
+            <p className="text-xs text-white/40 leading-loose tracking-widest uppercase mb-4">The Korea Advanced Institute of Science and Technology</p>
+            <p className="text-[10px] text-white/30 leading-relaxed tracking-wider">Computer Science.</p>
           </div>
 
         </div>
         
         <div className="mt-24 border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-start md:items-center w-full gap-6">
           <div className="flex flex-col gap-2">
-            <p className="text-[10px] text-white/30 tracking-[0.2em] uppercase">© 2026 Zaibei (Eric) Li</p>
+            <p className="text-[10px] text-white/30 tracking-[0.2em] uppercase">© 2026 Zaibei Li</p>
             <div className="flex flex-wrap gap-4">
               <a href="mailto:zali@di.ku.dk" className="text-[10px] text-white/50 hover:text-white tracking-[0.2em] uppercase transition-colors">zali@di.ku.dk</a>
               <span className="text-white/20 hidden md:inline">|</span>
