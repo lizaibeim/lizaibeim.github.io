@@ -277,7 +277,7 @@ export const AppContent: React.FC = () => {
       <section id="about" className="relative min-h-screen flex items-center p-8 md:p-16 pointer-events-auto">
         <div className="max-w-2xl">
           <h2 className="font-display italic text-4xl md:text-5xl text-white/80 font-light mb-12 leading-tight flex items-baseline gap-4">
-            <span className="font-sans not-italic text-2xl md:text-3xl text-white/40 tracking-widest">你好,</span>
+            <span className="font-sans not-italic text-2xl md:text-3xl text-white/80 tracking-widest">你好,</span>
             Hello.
           </h2>
           <div className="space-y-8 text-xs md:text-sm text-white/50 font-light tracking-widest leading-loose uppercase">
@@ -285,7 +285,7 @@ export const AppContent: React.FC = () => {
               I am a Doctoral Researcher at the University of Copenhagen, specializing in multimodal data analytics and human-centered AI systems.
             </p>
             <p>
-              My research bridges multimodal wearable sensing, human-AI collaboration, and ubiquitous computing. I design and build IoT-based systems and interactive dashboards to model and visualize complex collaborative behavior in real-world environments.
+              My research bridges egocentric wearable platforms, real-time multimodal sensing, and interactive AI systems for collaborative learning analytics. I design and build human-centered tools that support team-based learning through sensing, facilitation, and data-driven insight.
             </p>
           </div>
         </div>
@@ -322,7 +322,7 @@ export const AppContent: React.FC = () => {
             <a href="https://ucph-cola.org" target="_blank" rel="noreferrer" className="snap-start shrink-0 w-[85vw] md:w-[40vw] border-t border-white/10 pt-8 group cursor-pointer block">
               <div className="text-[10px] text-white/30 tracking-[0.2em] uppercase mb-4">Platform // Wearable & AI</div>
               <h3 className="text-xl text-white/80 font-light tracking-widest uppercase mb-4 group-hover:text-white transition-colors">CoLA</h3>
-              <p className="text-xs text-white/40 leading-loose tracking-widest uppercase">An egocentric wearable platform for real-time multimodal sensing and Human-AI collaboration in team-based learning analytics.</p>
+              <p className="text-xs text-white/40 leading-loose tracking-widest uppercase">An egocentric wearable platform integrating real-time multimodal sensing and an interactive AI facilitator for team-based learning analytics.</p>
             </a>
             
             {/* Project 1 */}
@@ -433,7 +433,7 @@ export const AppContent: React.FC = () => {
           <div className="flex flex-wrap gap-4">
             <a href="https://www.linkedin.com/in/zaibei-eric-li/" target="_blank" rel="noreferrer" className="text-[10px] text-white/50 hover:text-white tracking-[0.2em] uppercase transition-colors">LinkedIn</a>
             <span className="text-white/20 hidden md:inline">|</span>
-            <a href="/Zaibei_s_CV.pdf" download="Zaibei_s_CV.pdf" className="text-[10px] text-white/50 hover:text-white tracking-[0.2em] uppercase transition-colors">Download Full CV</a>
+            <a href="/cv-zaibei-industry.pdf" download="Zaibei_Li_CV.pdf" className="text-[10px] text-white/50 hover:text-white tracking-[0.2em] uppercase transition-colors">Download Full CV</a>
           </div>
         </div>
       </section>
