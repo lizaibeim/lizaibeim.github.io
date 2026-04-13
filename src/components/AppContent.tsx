@@ -285,7 +285,7 @@ export const AppContent: React.FC = () => {
               I am a Doctoral Researcher at the University of Copenhagen, specializing in multimodal data analytics and human-centered AI systems.
             </p>
             <p>
-              My research bridges egocentric wearable platforms, real-time multimodal sensing, and interactive AI systems for collaborative learning analytics. I design and build human-centered tools that support team-based learning through sensing, facilitation, and data-driven insight.
+              My research bridges multimodal wearable sensing, human-AI collaboration, and ubiquitous computing. I design and build IoT-based systems and interactive dashboards to model and visualize complex collaborative behavior in real-world environments.
             </p>
           </div>
         </div>
