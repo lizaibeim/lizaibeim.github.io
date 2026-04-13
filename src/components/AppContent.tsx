@@ -322,28 +322,28 @@ export const AppContent: React.FC = () => {
             <a href="https://ucph-cola.org" target="_blank" rel="noreferrer" className="snap-start shrink-0 w-[85vw] md:w-[40vw] border-t border-white/10 pt-8 group cursor-pointer block">
               <div className="text-[10px] text-white/30 tracking-[0.2em] uppercase mb-4">Platform // Wearable & AI</div>
               <h3 className="text-xl text-white/80 font-light tracking-widest uppercase mb-4 group-hover:text-white transition-colors">CoLA</h3>
-              <p className="text-xs text-white/40 leading-loose tracking-widest uppercase">An egocentric wearable platform for real-time multimodal sensing and Human-AI collaboration in learning analytics.</p>
+              <p className="text-xs text-white/40 leading-loose tracking-widest uppercase">An egocentric wearable platform for real-time multimodal sensing and Human-AI collaboration in team-based learning analytics.</p>
             </a>
             
             {/* Project 1 */}
             <a href="https://github.com/ucph-ccs/OpenMMLA" target="_blank" rel="noreferrer" className="snap-start shrink-0 w-[85vw] md:w-[40vw] border-t border-white/10 pt-8 group cursor-pointer block">
               <div className="text-[10px] text-white/30 tracking-[0.2em] uppercase mb-4">Toolkit // IoT & Analytics</div>
               <h3 className="text-xl text-white/80 font-light tracking-widest uppercase mb-4 group-hover:text-white transition-colors">OpenMMLA</h3>
-              <p className="text-xs text-white/40 leading-loose tracking-widest uppercase">An open-source multimodal data collection toolkit for learning analytics. Awarded Best Short Paper at LAK '25.</p>
+              <p className="text-xs text-white/40 leading-loose tracking-widest uppercase">An open-source multimodal data collection toolkit for collaborative learning analytics. Awarded Best Short Paper at LAK '25.</p>
             </a>
             
             {/* Project 2 */}
             <a href="https://github.com/lizaibeim/motion-matching" target="_blank" rel="noreferrer" className="snap-start shrink-0 w-[85vw] md:w-[40vw] border-t border-white/10 pt-8 group cursor-pointer block">
               <div className="text-[10px] text-white/30 tracking-[0.2em] uppercase mb-4">System // C# & Unity</div>
               <h3 className="text-xl text-white/80 font-light tracking-widest uppercase mb-4 group-hover:text-white transition-colors">MotionMatching</h3>
-              <p className="text-xs text-white/40 leading-loose tracking-widest uppercase">A real-time motion matching system developed on Unity, designed to capture and analyze complex human movements.</p>
+              <p className="text-xs text-white/40 leading-loose tracking-widest uppercase">A real-time motion matching system on Unity implemented in C#.</p>
             </a>
 
             {/* Project 3 */}
             <a href="https://github.com/lizaibeim/casper-ffg" target="_blank" rel="noreferrer" className="snap-start shrink-0 w-[85vw] md:w-[40vw] border-t border-white/10 pt-8 group cursor-pointer block">
               <div className="text-[10px] text-white/30 tracking-[0.2em] uppercase mb-4">Algorithm // Python</div>
               <h3 className="text-xl text-white/80 font-light tracking-widest uppercase mb-4 group-hover:text-white transition-colors">CasperFFG</h3>
-              <p className="text-xs text-white/40 leading-loose tracking-widest uppercase">A Python implementation of the CasperFFG consensus combined with PoW consensus on a simulated blockchain.</p>
+              <p className="text-xs text-white/40 leading-loose tracking-widest uppercase">A Python implementation of the CasperFFG consensus combined with PoW consensus on simulated blockchain.</p>
             </a>
 
           </div>
@@ -381,21 +381,21 @@ export const AppContent: React.FC = () => {
             <div className="text-[10px] text-white/30 tracking-[0.2em] uppercase border-b border-white/10 pb-4 mb-6">Nov 2025 - Jan 2026</div>
             <h3 className="text-sm text-white/80 tracking-widest uppercase mb-2">Visiting Researcher</h3>
             <p className="text-xs text-white/40 leading-loose tracking-widest uppercase mb-4">Hiroshima City University</p>
-            <p className="text-[10px] text-white/30 leading-relaxed tracking-wider">Prototyped multimodal sensing; secured partnership with Meta Project Aria.</p>
+            <p className="text-[10px] text-white/30 leading-relaxed tracking-wider">Prototyped a multimodal sensing setup (Arduino, mobile sensing, smart glasses); secured a research partnership with Meta Project Aria.</p>
           </div>
 
           <div className="snap-start shrink-0 w-[70vw] md:w-[25vw] flex flex-col">
             <div className="text-[10px] text-white/30 tracking-[0.2em] uppercase border-b border-white/10 pb-4 mb-6">Feb 2024 - Present</div>
             <h3 className="text-sm text-white/80 tracking-widest uppercase mb-2">Doctoral Researcher</h3>
             <p className="text-xs text-white/40 leading-loose tracking-widest uppercase mb-4">University of Copenhagen</p>
-            <p className="text-[10px] text-white/30 leading-relaxed tracking-wider">Ph.D. in Computer Science. Awarded PhD Fellowship (2024-2027).</p>
+            <p className="text-[10px] text-white/30 leading-relaxed tracking-wider">Integrated prior prototypes into OpenMMLA, an IoT-based multimodal toolkit. Developed interactive workflows and pipeline components for multimodal sensing.</p>
           </div>
 
           <div className="snap-start shrink-0 w-[70vw] md:w-[25vw] flex flex-col">
             <div className="text-[10px] text-white/30 tracking-[0.2em] uppercase border-b border-white/10 pb-4 mb-6">Jun 2023 - Feb 2024</div>
             <h3 className="text-sm text-white/80 tracking-widest uppercase mb-2">Research Assistant</h3>
             <p className="text-xs text-white/40 leading-loose tracking-widest uppercase mb-4">University of Copenhagen</p>
-            <p className="text-[10px] text-white/30 leading-relaxed tracking-wider">Department of Computer Science and Science Education.</p>
+            <p className="text-[10px] text-white/30 leading-relaxed tracking-wider">Prototyped sociometric badges and established early multimodal data workflows, which directly evolved into the open-source OpenMMLA toolkit.</p>
           </div>
 
           <div className="snap-start shrink-0 w-[70vw] md:w-[25vw] flex flex-col">
