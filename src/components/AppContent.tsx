@@ -35,6 +35,18 @@ export const AppContent: React.FC = () => {
   const audioCtxRef = useRef<AudioContext | null>(null);
   const gainNodeRef = useRef<GainNode | null>(null);
 
+  // Refs for horizontal scrolling sections
+  const projectsScrollRef = useRef<HTMLDivElement>(null);
+  const trajectoryScrollRef = useRef<HTMLDivElement>(null);
+
+  const scrollSection = (ref: React.RefObject<HTMLDivElement | null>, direction: 'left' | 'right') => {
+    if (ref.current) {
+      // Scroll by roughly the width of one card + gap
+      const scrollAmount = window.innerWidth < 768 ? window.innerWidth * 0.85 : window.innerWidth * 0.4;
+      ref.current.scrollBy({ left: direction === 'left' ? -scrollAmount : scrollAmount, behavior: 'smooth' });
+    }
+  };
+
   // Track active section for navigation highlight
   useEffect(() => {
     const observer = new IntersectionObserver((entries) => {
@@ -270,10 +282,10 @@ export const AppContent: React.FC = () => {
           </h2>
           <div className="space-y-8 text-xs md:text-sm text-white/50 font-light tracking-widest leading-loose uppercase">
             <p>
-              I am a Doctoral Researcher at the University of Copenhagen, specializing in Multimodal Learning Analytics (MMLA).
+              I am a Doctoral Researcher at the University of Copenhagen, specializing in multimodal data analytics and human-centered AI systems.
             </p>
             <p>
-              My research bridges educational data mining, human-AI collaboration, and ubiquitous computing. I build IoT-based systems and interactive dashboards to visualize and decode the complex, unseen rhythms of how we learn.
+              My research bridges multimodal wearable sensing, human-AI collaboration, and ubiquitous computing. I design and build IoT-based systems and interactive dashboards to model and visualize complex collaborative behavior in real-world environments.
             </p>
           </div>
         </div>
@@ -282,11 +294,36 @@ export const AppContent: React.FC = () => {
       {/* Section 3: Projects */}
       <section id="projects" className="min-h-screen flex flex-col justify-center p-8 md:p-16 pointer-events-auto">
         <div className="w-full">
-          <h2 className="font-display italic text-4xl md:text-5xl text-white/80 font-light mb-16">
-            Selected Projects.
-          </h2>
+          <div className="flex justify-between items-end mb-16">
+            <h2 className="font-display italic text-4xl md:text-5xl text-white/80 font-light">
+              Selected Projects.
+            </h2>
+            <div className="flex gap-6 hidden md:flex pb-2">
+              <button 
+                onClick={() => scrollSection(projectsScrollRef, 'left')} 
+                className="text-white/30 hover:text-white transition-colors text-xl"
+                aria-label="Scroll left"
+              >
+                ←
+              </button>
+              <button 
+                onClick={() => scrollSection(projectsScrollRef, 'right')} 
+                className="text-white/30 hover:text-white transition-colors text-xl"
+                aria-label="Scroll right"
+              >
+                →
+              </button>
+            </div>
+          </div>
           {/* Horizontal Scroll Container */}
-          <div className="flex overflow-x-auto snap-x snap-mandatory gap-8 md:gap-16 pb-8 hide-scrollbar w-full">
+          <div ref={projectsScrollRef} className="flex overflow-x-auto snap-x snap-mandatory gap-8 md:gap-16 pb-8 hide-scrollbar w-full">
+            
+            {/* Project CoLA */}
+            <a href="https://ucph-cola.org" target="_blank" rel="noreferrer" className="snap-start shrink-0 w-[85vw] md:w-[40vw] border-t border-white/10 pt-8 group cursor-pointer block">
+              <div className="text-[10px] text-white/30 tracking-[0.2em] uppercase mb-4">Platform // Wearable & AI</div>
+              <h3 className="text-xl text-white/80 font-light tracking-widest uppercase mb-4 group-hover:text-white transition-colors">CoLA</h3>
+              <p className="text-xs text-white/40 leading-loose tracking-widest uppercase">An egocentric wearable platform for real-time multimodal sensing and Human-AI collaboration in learning analytics.</p>
+            </a>
             
             {/* Project 1 */}
             <a href="https://github.com/ucph-ccs/OpenMMLA" target="_blank" rel="noreferrer" className="snap-start shrink-0 w-[85vw] md:w-[40vw] border-t border-white/10 pt-8 group cursor-pointer block">
@@ -315,22 +352,47 @@ export const AppContent: React.FC = () => {
 
       {/* Section 4: Resume */}
       <section id="resume" className="min-h-screen flex flex-col justify-center p-8 md:p-16 pointer-events-auto">
-        <h2 className="font-display italic text-4xl md:text-5xl text-white/80 font-light mb-16">
-          Trajectory.
-        </h2>
+        <div className="flex justify-between items-end mb-16">
+          <h2 className="font-display italic text-4xl md:text-5xl text-white/80 font-light">
+            Trajectory.
+          </h2>
+          <div className="flex gap-6 hidden md:flex pb-2">
+            <button 
+              onClick={() => scrollSection(trajectoryScrollRef, 'left')} 
+              className="text-white/30 hover:text-white transition-colors text-xl"
+              aria-label="Scroll left"
+            >
+              ←
+            </button>
+            <button 
+              onClick={() => scrollSection(trajectoryScrollRef, 'right')} 
+              className="text-white/30 hover:text-white transition-colors text-xl"
+              aria-label="Scroll right"
+            >
+              →
+            </button>
+          </div>
+        </div>
         
         {/* Horizontal Scroll Container for Resume */}
-        <div className="flex overflow-x-auto snap-x snap-mandatory gap-12 md:gap-24 pb-8 hide-scrollbar w-full">
+        <div ref={trajectoryScrollRef} className="flex overflow-x-auto snap-x snap-mandatory gap-12 md:gap-24 pb-8 hide-scrollbar w-full">
           
           <div className="snap-start shrink-0 w-[70vw] md:w-[25vw] flex flex-col">
-            <div className="text-[10px] text-white/30 tracking-[0.2em] uppercase border-b border-white/10 pb-4 mb-6">2024 - Present</div>
+            <div className="text-[10px] text-white/30 tracking-[0.2em] uppercase border-b border-white/10 pb-4 mb-6">Nov 2025 - Jan 2026</div>
+            <h3 className="text-sm text-white/80 tracking-widest uppercase mb-2">Visiting Researcher</h3>
+            <p className="text-xs text-white/40 leading-loose tracking-widest uppercase mb-4">Hiroshima City University</p>
+            <p className="text-[10px] text-white/30 leading-relaxed tracking-wider">Prototyped multimodal sensing; secured partnership with Meta Project Aria.</p>
+          </div>
+
+          <div className="snap-start shrink-0 w-[70vw] md:w-[25vw] flex flex-col">
+            <div className="text-[10px] text-white/30 tracking-[0.2em] uppercase border-b border-white/10 pb-4 mb-6">Feb 2024 - Present</div>
             <h3 className="text-sm text-white/80 tracking-widest uppercase mb-2">Doctoral Researcher</h3>
             <p className="text-xs text-white/40 leading-loose tracking-widest uppercase mb-4">University of Copenhagen</p>
             <p className="text-[10px] text-white/30 leading-relaxed tracking-wider">Ph.D. in Computer Science. Awarded PhD Fellowship (2024-2027).</p>
           </div>
 
           <div className="snap-start shrink-0 w-[70vw] md:w-[25vw] flex flex-col">
-            <div className="text-[10px] text-white/30 tracking-[0.2em] uppercase border-b border-white/10 pb-4 mb-6">2023 - 2024</div>
+            <div className="text-[10px] text-white/30 tracking-[0.2em] uppercase border-b border-white/10 pb-4 mb-6">Jun 2023 - Feb 2024</div>
             <h3 className="text-sm text-white/80 tracking-widest uppercase mb-2">Research Assistant</h3>
             <p className="text-xs text-white/40 leading-loose tracking-widest uppercase mb-4">University of Copenhagen</p>
             <p className="text-[10px] text-white/30 leading-relaxed tracking-wider">Department of Computer Science and Science Education.</p>
