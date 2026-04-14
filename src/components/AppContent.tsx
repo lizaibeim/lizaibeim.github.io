@@ -224,7 +224,7 @@ export const AppContent: React.FC = () => {
           onMouseLeave={() => setFocus(false)}
         >
           <h1 className="text-sm md:text-base font-light tracking-[0.3em] mb-2 text-white/90 uppercase flex items-center gap-3">
-            Zaibei Li <span className="text-white/40 text-xs tracking-widest font-sans">李再倍</span>
+            Zaibei Li <span className="text-white/90 text-xs tracking-widest font-sans">李再倍</span>
           </h1>
         </motion.div>
 
@@ -238,7 +238,7 @@ export const AppContent: React.FC = () => {
         >
           <h2 className="font-display italic text-3xl md:text-5xl lg:text-6xl text-white/80 font-light leading-tight mb-8 cursor-default">
             Capturing the <AnimatedRhythms /> <br className="hidden md:block"/> 
-            of human cognition.
+            of human collaboration.
           </h2>
           <p className="text-xs md:text-sm text-white/40 font-light tracking-widest leading-loose uppercase">
             Through sensors, signals, and silence. <br/>
@@ -259,7 +259,7 @@ export const AppContent: React.FC = () => {
           >
             <span className="text-white/50 block mb-2">[ Modalities ]</span>
             Video / Audio / Motion <br/>
-            iOS CoreMotion / Arduino
+            Mobile / Embedded / Smart Glasses
           </div>
           
           <a 
