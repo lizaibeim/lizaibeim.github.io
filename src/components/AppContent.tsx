@@ -37,6 +37,7 @@ export const AppContent: React.FC = () => {
 
   // Refs for horizontal scrolling sections
   const projectsScrollRef = useRef<HTMLDivElement>(null);
+  const earlierProjectsScrollRef = useRef<HTMLDivElement>(null);
   const trajectoryScrollRef = useRef<HTMLDivElement>(null);
 
   const scrollSection = (ref: React.RefObject<HTMLDivElement | null>, direction: 'left' | 'right') => {
@@ -352,16 +353,34 @@ export const AppContent: React.FC = () => {
           </div>
 
           <div>
-            <p className="text-[10px] text-white/30 tracking-[0.2em] uppercase mb-6">Earlier / Exploratory Work</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 w-full">
+            <div className="flex justify-between items-center mb-6 gap-4">
+              <p className="text-[10px] text-white/30 tracking-[0.2em] uppercase">Earlier / Exploratory Work</p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => scrollSection(earlierProjectsScrollRef, 'left')}
+                  className="flex h-11 w-11 items-center justify-center text-white/30 hover:text-white transition-colors text-xl"
+                  aria-label="Scroll earlier projects left"
+                >
+                  ←
+                </button>
+                <button
+                  onClick={() => scrollSection(earlierProjectsScrollRef, 'right')}
+                  className="flex h-11 w-11 items-center justify-center text-white/30 hover:text-white transition-colors text-xl"
+                  aria-label="Scroll earlier projects right"
+                >
+                  →
+                </button>
+              </div>
+            </div>
+            <div ref={earlierProjectsScrollRef} className="flex overflow-x-auto snap-x snap-mandatory gap-8 md:gap-16 pb-8 hide-scrollbar w-full">
               
-              <a href="https://github.com/lizaibeim/motion-matching" target="_blank" rel="noreferrer" className="border-t border-white/10 pt-8 group cursor-pointer block min-w-0">
+              <a href="https://github.com/lizaibeim/motion-matching" target="_blank" rel="noreferrer" className="snap-start shrink-0 w-[85vw] md:w-[40vw] border-t border-white/10 pt-8 group cursor-pointer block min-w-0">
                 <div className="text-[10px] text-white/30 tracking-[0.2em] uppercase mb-4">System // C# & Unity</div>
                 <h3 className="text-xl text-white/80 font-light tracking-widest uppercase mb-4 group-hover:text-white transition-colors">MotionMatching</h3>
                 <p className="text-xs text-white/40 leading-loose tracking-widest uppercase">A real-time motion matching system on Unity implemented in C#.</p>
               </a>
 
-              <a href="https://github.com/lizaibeim/casper-ffg" target="_blank" rel="noreferrer" className="border-t border-white/10 pt-8 group cursor-pointer block min-w-0">
+              <a href="https://github.com/lizaibeim/casper-ffg" target="_blank" rel="noreferrer" className="snap-start shrink-0 w-[85vw] md:w-[40vw] border-t border-white/10 pt-8 group cursor-pointer block min-w-0">
                 <div className="text-[10px] text-white/30 tracking-[0.2em] uppercase mb-4">Earlier Work // Blockchain</div>
                 <h3 className="text-xl text-white/80 font-light tracking-widest uppercase mb-4 group-hover:text-white transition-colors">CasperFFG</h3>
                 <p className="text-xs text-white/40 leading-loose tracking-widest uppercase">An undergraduate capstone project exploring Casper FFG consensus with a Python-based simulated blockchain implementation.</p>
