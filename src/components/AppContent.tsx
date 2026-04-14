@@ -282,10 +282,10 @@ export const AppContent: React.FC = () => {
           </h2>
           <div className="space-y-8 text-xs md:text-sm text-white/50 font-light tracking-widest leading-loose uppercase">
             <p>
-              I am a Doctoral Researcher at the University of Copenhagen, specializing in multimodal data analytics and human-centered AI systems.
+              I am a doctoral researcher in computer science at the University of Copenhagen. I spend most of my time building multimodal sensing systems, wearable prototypes, and interactive AI tools that help make human collaboration easier to understand.
             </p>
             <p>
-              My research bridges multimodal wearable sensing, human-AI collaboration, and ubiquitous computing. I design and build IoT-based systems and interactive dashboards to model and visualize complex collaborative behavior in real-world environments.
+              What I enjoy most is turning messy real-world behavior into something visible and usable, whether that means wiring sensors, prototyping new devices, or designing interpretable pipelines for people working and learning together.
             </p>
           </div>
         </div>
@@ -296,7 +296,7 @@ export const AppContent: React.FC = () => {
         <div className="w-full">
           <div className="flex justify-between items-end mb-16">
             <h2 className="font-display italic text-4xl md:text-5xl text-white/80 font-light">
-              Selected Projects.
+              Projects.
             </h2>
             <div className="flex gap-6 hidden md:flex pb-2">
               <button 
@@ -315,37 +315,59 @@ export const AppContent: React.FC = () => {
               </button>
             </div>
           </div>
-          {/* Horizontal Scroll Container */}
-          <div ref={projectsScrollRef} className="flex overflow-x-auto snap-x snap-mandatory gap-8 md:gap-16 pb-8 hide-scrollbar w-full">
-            
-            {/* Project CoLA */}
-            <a href="https://ucph-cola.org" target="_blank" rel="noreferrer" className="snap-start shrink-0 w-[85vw] md:w-[40vw] border-t border-white/10 pt-8 group cursor-pointer block">
-              <div className="text-[10px] text-white/30 tracking-[0.2em] uppercase mb-4">Platform // Wearable & AI</div>
-              <h3 className="text-xl text-white/80 font-light tracking-widest uppercase mb-4 group-hover:text-white transition-colors">CoLA</h3>
-              <p className="text-xs text-white/40 leading-loose tracking-widest uppercase">An egocentric wearable platform integrating real-time multimodal sensing and an interactive AI facilitator for team-based learning analytics.</p>
-            </a>
-            
-            {/* Project 1 */}
-            <a href="https://github.com/ucph-ccs/OpenMMLA" target="_blank" rel="noreferrer" className="snap-start shrink-0 w-[85vw] md:w-[40vw] border-t border-white/10 pt-8 group cursor-pointer block">
-              <div className="text-[10px] text-white/30 tracking-[0.2em] uppercase mb-4">Toolkit // IoT & Analytics</div>
-              <h3 className="text-xl text-white/80 font-light tracking-widest uppercase mb-4 group-hover:text-white transition-colors">OpenMMLA</h3>
-              <p className="text-xs text-white/40 leading-loose tracking-widest uppercase">An open-source multimodal data collection toolkit for collaborative learning analytics. Awarded Best Short Paper at LAK '25.</p>
-            </a>
-            
-            {/* Project 2 */}
-            <a href="https://github.com/lizaibeim/motion-matching" target="_blank" rel="noreferrer" className="snap-start shrink-0 w-[85vw] md:w-[40vw] border-t border-white/10 pt-8 group cursor-pointer block">
-              <div className="text-[10px] text-white/30 tracking-[0.2em] uppercase mb-4">System // C# & Unity</div>
-              <h3 className="text-xl text-white/80 font-light tracking-widest uppercase mb-4 group-hover:text-white transition-colors">MotionMatching</h3>
-              <p className="text-xs text-white/40 leading-loose tracking-widest uppercase">A real-time motion matching system on Unity implemented in C#.</p>
-            </a>
+          
+          <div className="mb-14">
+            <p className="text-[10px] text-white/30 tracking-[0.2em] uppercase mb-6">Selected Projects</p>
+            <div ref={projectsScrollRef} className="flex overflow-x-auto snap-x snap-mandatory gap-8 md:gap-16 pb-8 hide-scrollbar w-full">
+              
+              {/* Project CoLA */}
+              <a href="https://ucph-cola.org" target="_blank" rel="noreferrer" className="snap-start shrink-0 w-[85vw] md:w-[40vw] border-t border-white/10 pt-8 group cursor-pointer block">
+                <div className="text-[10px] text-white/30 tracking-[0.2em] uppercase mb-4">Platform // Wearable & AI</div>
+                <h3 className="text-xl text-white/80 font-light tracking-widest uppercase mb-4 group-hover:text-white transition-colors">CoLA</h3>
+                <p className="text-xs text-white/40 leading-loose tracking-widest uppercase">A wearable multimodal AI platform for egocentric sensing, real-time behavioral analysis, and interactive facilitation in collaborative learning settings.</p>
+              </a>
+              
+              {/* Project 1 */}
+              <a href="https://github.com/ucph-ccs/OpenMMLA" target="_blank" rel="noreferrer" className="snap-start shrink-0 w-[85vw] md:w-[40vw] border-t border-white/10 pt-8 group cursor-pointer block">
+                <div className="text-[10px] text-white/30 tracking-[0.2em] uppercase mb-4">Toolkit // IoT & Analytics</div>
+                <h3 className="text-xl text-white/80 font-light tracking-widest uppercase mb-4 group-hover:text-white transition-colors">OpenMMLA</h3>
+                <p className="text-xs text-white/40 leading-loose tracking-widest uppercase">An open-source IoT toolkit for multimodal data collection, synchronization, and analytics across real-world collaborative environments.</p>
+              </a>
 
-            {/* Project 3 */}
-            <a href="https://github.com/lizaibeim/casper-ffg" target="_blank" rel="noreferrer" className="snap-start shrink-0 w-[85vw] md:w-[40vw] border-t border-white/10 pt-8 group cursor-pointer block">
-              <div className="text-[10px] text-white/30 tracking-[0.2em] uppercase mb-4">Algorithm // Python</div>
-              <h3 className="text-xl text-white/80 font-light tracking-widest uppercase mb-4 group-hover:text-white transition-colors">CasperFFG</h3>
-              <p className="text-xs text-white/40 leading-loose tracking-widest uppercase">A Python implementation of the CasperFFG consensus combined with PoW consensus on simulated blockchain.</p>
-            </a>
+              {/* Project 2 */}
+              <a href="https://github.com/ucph-ccs/mbox-uber" target="_blank" rel="noreferrer" className="snap-start shrink-0 w-[85vw] md:w-[40vw] border-t border-white/10 pt-8 group cursor-pointer block">
+                <div className="text-[10px] text-white/30 tracking-[0.2em] uppercase mb-4">Prototype // Multimodal Sensing</div>
+                <h3 className="text-xl text-white/80 font-light tracking-widest uppercase mb-4 group-hover:text-white transition-colors">mBox</h3>
+                <p className="text-xs text-white/40 leading-loose tracking-widest uppercase">An early multimodal sensing prototype featuring sociometric badges, audio pipelines, and AprilTag-based spatial tracking that later evolved into OpenMMLA.</p>
+              </a>
 
+              {/* Project 3 */}
+              <a href="https://github.com/lizaibeim/mmla-audio" target="_blank" rel="noreferrer" className="snap-start shrink-0 w-[85vw] md:w-[40vw] border-t border-white/10 pt-8 group cursor-pointer block">
+                <div className="text-[10px] text-white/30 tracking-[0.2em] uppercase mb-4">Pipeline // Speech Analytics</div>
+                <h3 className="text-xl text-white/80 font-light tracking-widest uppercase mb-4 group-hover:text-white transition-colors">MMLA-Audio</h3>
+                <p className="text-xs text-white/40 leading-loose tracking-widest uppercase">A real-time speech analytics pipeline with speaker recognition and speech overlap detection, optimized for edge deployment.</p>
+              </a>
+
+            </div>
+          </div>
+
+          <div>
+            <p className="text-[10px] text-white/30 tracking-[0.2em] uppercase mb-6">Earlier / Exploratory Work</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 w-full">
+              
+              <a href="https://github.com/lizaibeim/motion-matching" target="_blank" rel="noreferrer" className="border-t border-white/10 pt-8 group cursor-pointer block min-w-0">
+                <div className="text-[10px] text-white/30 tracking-[0.2em] uppercase mb-4">System // C# & Unity</div>
+                <h3 className="text-xl text-white/80 font-light tracking-widest uppercase mb-4 group-hover:text-white transition-colors">MotionMatching</h3>
+                <p className="text-xs text-white/40 leading-loose tracking-widest uppercase">A real-time motion matching system on Unity implemented in C#.</p>
+              </a>
+
+              <a href="https://github.com/lizaibeim/casper-ffg" target="_blank" rel="noreferrer" className="border-t border-white/10 pt-8 group cursor-pointer block min-w-0">
+                <div className="text-[10px] text-white/30 tracking-[0.2em] uppercase mb-4">Earlier Work // Blockchain</div>
+                <h3 className="text-xl text-white/80 font-light tracking-widest uppercase mb-4 group-hover:text-white transition-colors">CasperFFG</h3>
+                <p className="text-xs text-white/40 leading-loose tracking-widest uppercase">An undergraduate capstone project exploring Casper FFG consensus with a Python-based simulated blockchain implementation.</p>
+              </a>
+
+            </div>
           </div>
         </div>
       </section>
@@ -381,21 +403,21 @@ export const AppContent: React.FC = () => {
             <div className="text-[10px] text-white/30 tracking-[0.2em] uppercase border-b border-white/10 pb-4 mb-6">Nov 2025 - Jan 2026</div>
             <h3 className="text-sm text-white/80 tracking-widest uppercase mb-2">Visiting Researcher</h3>
             <p className="text-xs text-white/40 leading-loose tracking-widest uppercase mb-4">Hiroshima City University</p>
-            <p className="text-[10px] text-white/30 leading-relaxed tracking-wider">Prototyped a multimodal sensing setup (Arduino, mobile sensing, smart glasses); secured a research partnership with Meta Project Aria.</p>
+            <p className="text-[10px] text-white/30 leading-relaxed tracking-wider">Prototyped an egocentric multimodal sensing setup using mobile devices, embedded sensors, and smart glasses, then developed CoLA with an interactive AI facilitator for real-time collaborative learning analytics.</p>
           </div>
 
           <div className="snap-start shrink-0 w-[70vw] md:w-[25vw] flex flex-col">
             <div className="text-[10px] text-white/30 tracking-[0.2em] uppercase border-b border-white/10 pb-4 mb-6">Feb 2024 - Present</div>
             <h3 className="text-sm text-white/80 tracking-widest uppercase mb-2">Doctoral Researcher</h3>
             <p className="text-xs text-white/40 leading-loose tracking-widest uppercase mb-4">University of Copenhagen</p>
-            <p className="text-[10px] text-white/30 leading-relaxed tracking-wider">Integrated prior prototypes into OpenMMLA, an IoT-based multimodal toolkit. Developed interactive workflows and pipeline components for multimodal sensing.</p>
+            <p className="text-[10px] text-white/30 leading-relaxed tracking-wider">Designed and developed OpenMMLA, a reusable IoT-based toolkit for multimodal data collection, synchronization, and analytics, plus interactive pipelines for sensor fusion, behavioral modeling, and visualization.</p>
           </div>
 
           <div className="snap-start shrink-0 w-[70vw] md:w-[25vw] flex flex-col">
             <div className="text-[10px] text-white/30 tracking-[0.2em] uppercase border-b border-white/10 pb-4 mb-6">Jun 2023 - Feb 2024</div>
             <h3 className="text-sm text-white/80 tracking-widest uppercase mb-2">Research Assistant</h3>
             <p className="text-xs text-white/40 leading-loose tracking-widest uppercase mb-4">University of Copenhagen</p>
-            <p className="text-[10px] text-white/30 leading-relaxed tracking-wider">Prototyped sociometric badges and established early multimodal data workflows, which directly evolved into the open-source OpenMMLA toolkit.</p>
+            <p className="text-[10px] text-white/30 leading-relaxed tracking-wider">Prototyped sociometric badges and AprilTag-based spatial tracking, then built early data collection and processing workflows for mBox, the prototype that evolved into OpenMMLA.</p>
           </div>
 
           <div className="snap-start shrink-0 w-[70vw] md:w-[25vw] flex flex-col">
@@ -433,7 +455,7 @@ export const AppContent: React.FC = () => {
           <div className="flex flex-wrap gap-4">
             <a href="https://www.linkedin.com/in/zaibei-eric-li/" target="_blank" rel="noreferrer" className="text-[10px] text-white/50 hover:text-white tracking-[0.2em] uppercase transition-colors">LinkedIn</a>
             <span className="text-white/20 hidden md:inline">|</span>
-            <a href="/cv-zaibei-industry.pdf" download="Zaibei_Li_CV.pdf" className="text-[10px] text-white/50 hover:text-white tracking-[0.2em] uppercase transition-colors">Download Full CV</a>
+            <a href="/cv-zaibei.pdf" download="Zaibei_Li_CV.pdf" className="text-[10px] text-white/50 hover:text-white tracking-[0.2em] uppercase transition-colors">Download Full CV</a>
           </div>
         </div>
       </section>
