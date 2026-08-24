@@ -1,6 +1,14 @@
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { CompanionSprite, type SpriteFacing, type SpriteState } from './CompanionSprite';
+import {
+  CompanionSprite,
+  VIGNETTE_FIRST,
+  VIGNETTE_IDS,
+  VIGNETTE_MS,
+  type SpriteFacing,
+  type SpriteState,
+  type VignetteId,
+} from './CompanionSprite';
 
 interface CompanionProps {
   onOpenChat: () => void;
@@ -29,6 +37,29 @@ const DEAD_ZONE = 14;
 const SIDE_HYSTERESIS = 6;
 // hold the walk state across settling frames so the 0.6s cycle can actually play
 const WALK_LATCH = 260;
+// the walk target is always offset from the cursor, so chasing forever would keep
+// the character out of reach: once the cursor is this close to its centre it stops
+// and waits to be clicked instead
+const CATCH_RADIUS = 110;
+// how long it keeps waiting after the cursor leaves that radius, so a cursor
+// grazing past does not relaunch it into motion out from under the click
+const RESUME_DELAY = 450;
+
+// idle easter eggs: how long the scene has to stay genuinely still before the first one
+const VIGNETTE_FIRST_AFTER = 20000;
+// and how long a settled scene has to stay still before each later one
+const VIGNETTE_CALM = 3000;
+// the gap between vignettes, jittered so the cadence never reads as a metronome
+const VIGNETTE_GAP_MIN = 45000;
+const VIGNETTE_GAP_MAX = 90000;
+// how often eligibility is re-checked; the walk loop cancels on its own frame
+const VIGNETTE_TICK = 250;
+// the character comes to rest just inside CATCH_RADIUS by design, so that radius cannot be
+// the keep-out: gate on its own 64px box instead, which only a deliberate approach enters
+const VIGNETTE_KEEP_OUT = HALF + 8;
+// and the cursor itself has to have been still for a beat — a moving cursor is an audience
+// that is doing something else
+const VIGNETTE_POINTER_STILL = 1200;
 
 const HINT_DWELL = 350;
 const IDLE_PROMPT_AFTER = 12000;
@@ -59,6 +90,19 @@ const INTERACTIVE_SELECTOR =
 type BubbleSide = 'right' | 'left';
 type BubblePlace = 'above' | 'below';
 
+const nextGap = () => VIGNETTE_GAP_MIN + Math.random() * (VIGNETTE_GAP_MAX - VIGNETTE_GAP_MIN);
+
+// a shuffle bag rather than a plain random pick: it cannot repeat itself and it cannot
+// leave one vignette unseen for a whole session
+const shuffled = (ids: VignetteId[]) => {
+  const bag = ids.slice();
+  for (let i = bag.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [bag[i], bag[j]] = [bag[j], bag[i]];
+  }
+  return bag;
+};
+
 const readEnv = () => ({
   // coarse pointers get a parked button instead of a follower
   hoverNone: typeof window !== 'undefined' && window.matchMedia('(hover: none)').matches,
@@ -82,6 +126,7 @@ export const Companion: React.FC<CompanionProps> = ({ onOpenChat, hidden }) => {
   const [bubblePlace, setBubblePlace] = useState<BubblePlace>('above');
   // once the fade has finished the sprite leaves the tree, which stops its css animations
   const [faded, setFaded] = useState(hidden);
+  const [vignette, setVignette] = useState<VignetteId | null>(null);
 
   // hovering the character itself always wins: it is the click affordance
   const bubbleText = hidden ? null : hovered ? HOVER_TEXT : hint ?? (idlePrompt ? IDLE_PROMPT_TEXT : null);
@@ -99,8 +144,21 @@ export const Companion: React.FC<CompanionProps> = ({ onOpenChat, hidden }) => {
   const bubbleSideRef = useRef<BubbleSide>('right');
   const bubblePlaceRef = useRef<BubblePlace>('above');
   const lastStepRef = useRef(-Infinity);
+  // rAF timestamp of the last frame the cursor sat inside the catch radius
+  const caughtAtRef = useRef(-Infinity);
   // set while the character is standing over a real control and letting clicks through
   const passThroughRef = useRef(false);
+
+  // vignette scheduling: every timer lives in a ref so the rAF loop can cancel on its frame
+  const vignetteRef = useRef<VignetteId | null>(null);
+  const vignetteTimerRef = useRef<number | null>(null);
+  const bubbleRef = useRef(false);
+  const bagRef = useRef<VignetteId[]>([]);
+  const lastVignetteRef = useRef<VignetteId | null>(null);
+  const playedVignetteRef = useRef(false);
+  // wall clock of the earliest next play, and of the last moment the scene was disturbed
+  const vignetteNextAtRef = useRef(0);
+  const calmSinceRef = useRef(Date.now());
 
   const lastMoveRef = useRef(Date.now());
   const idleShownRef = useRef(0);
@@ -197,6 +255,23 @@ export const Companion: React.FC<CompanionProps> = ({ onOpenChat, hidden }) => {
     setSpriteState(next);
   }, []);
 
+  // one commit drops the vignette class and unmounts the whole vfx layer: every act*
+  // wrapper falls back to `transform:none` and no prop is left mid-air, because no prop
+  // is left in the dom at all. the wrappers carry no transition, so nothing smears.
+  const cancelVignette = useCallback(() => {
+    if (vignetteTimerRef.current !== null) {
+      window.clearTimeout(vignetteTimerRef.current);
+      vignetteTimerRef.current = null;
+    }
+    if (vignetteRef.current !== null) {
+      vignetteRef.current = null;
+      setVignette(null);
+      // an interrupted vignette still spends its slot, so the next one waits a full gap
+      vignetteNextAtRef.current = Date.now() + nextGap();
+    }
+    calmSinceRef.current = Date.now();
+  }, []);
+
   // hand the pointer back once the cursor has left the button it was let through
   const releasePassThrough = useCallback((x: number, y: number) => {
     if (!passThroughRef.current) return;
@@ -257,10 +332,13 @@ export const Companion: React.FC<CompanionProps> = ({ onOpenChat, hidden }) => {
   // parked modes have no walk loop, so drive the sprite straight off the bubble
   useEffect(() => {
     talkingRef.current = bubbleText !== null;
+    bubbleRef.current = bubbleText !== null;
+    // a bubble is the character addressing the visitor: an easter egg must not talk over it
+    if (bubbleText !== null) cancelVignette();
     if (parked) {
       applyState(bubbleText !== null ? 'talking' : 'idle');
     }
-  }, [bubbleText, parked, applyState]);
+  }, [bubbleText, parked, applyState, cancelVignette]);
 
   // pointer tracking: needed for the idle prompt even when the walk loop is off,
   // but pointless on a device that has no hover at all
@@ -307,8 +385,34 @@ export const Companion: React.FC<CompanionProps> = ({ onOpenChat, hidden }) => {
       const pointer = pointerRef.current;
       const pos = posRef.current;
 
+      // frame-accurate cancel: the moment the visitor reaches for the character, the
+      // easter egg is over. the character rests just inside CATCH_RADIUS by design, so
+      // the test is its own footprint, not the catch radius.
+      if (vignetteRef.current !== null) {
+        const close =
+          pointer.seen &&
+          followRef.current &&
+          Math.hypot(pointer.x - pos.x, pointer.y - pos.y) <= VIGNETTE_KEEP_OUT;
+        if (close || hoveredRef.current || stateRef.current !== 'idle') cancelVignette();
+      }
+
       // freeze while the cursor is on the character, otherwise it flees the click
       if (!pointer.seen || !followRef.current || hoveredRef.current) {
+        applyState(talkingRef.current ? 'talking' : 'idle');
+        return;
+      }
+
+      // a visitor walking the cursor over to the character has to be able to land on
+      // it, but the walk target is measured from the cursor, so chasing would carry
+      // the character along ahead of them. stop the chase as soon as the cursor is
+      // near, and keep standing still for a moment after it leaves again
+      const reach = Math.hypot(pointer.x - pos.x, pointer.y - pos.y);
+      if (reach <= CATCH_RADIUS) caughtAtRef.current = now;
+      if (now - caughtAtRef.current < RESUME_DELAY) {
+        // turn toward the visitor rather than away from them
+        if (Math.abs(pointer.x - pos.x) > SIDE_HYSTERESIS) {
+          applyFacing(pointer.x > pos.x ? 'right' : 'left');
+        }
         applyState(talkingRef.current ? 'talking' : 'idle');
         return;
       }
@@ -333,6 +437,8 @@ export const Companion: React.FC<CompanionProps> = ({ onOpenChat, hidden }) => {
       const distance = Math.hypot(dx, dy);
 
       if (distance >= DEAD_ZONE) {
+        // the walk owns the sprite from this frame on, so drop the vignette before stepping
+        if (vignetteRef.current !== null) cancelVignette();
         const stride = Math.min(WALK_SPEED * dt, distance);
         const stepX = (dx / distance) * stride;
         pos.x += stepX;
@@ -367,7 +473,94 @@ export const Companion: React.FC<CompanionProps> = ({ onOpenChat, hidden }) => {
     applyState,
     applyBubbleSide,
     applyBubblePlace,
+    cancelVignette,
   ]);
+
+  // idle easter eggs. the sprite only ever animates them off css it already owns, so the
+  // controller's whole job is deciding when to set the prop and when to clear it.
+  useEffect(() => {
+    if (parked || hidden || env.hoverNone) {
+      cancelVignette();
+      return;
+    }
+
+    const eligible = () => {
+      if (hiddenRef.current || document.hidden) return false;
+      if (hoveredRef.current || bubbleRef.current || hintElRef.current) return false;
+      if (stateRef.current !== 'idle') return false;
+      if (Date.now() - lastMoveRef.current < VIGNETTE_POINTER_STILL) return false;
+      const pointer = pointerRef.current;
+      const pos = posRef.current;
+      // a cursor sitting on the character is a visitor about to click, not an audience
+      if (pointer.seen && Math.hypot(pointer.x - pos.x, pointer.y - pos.y) <= VIGNETTE_KEEP_OUT) {
+        return false;
+      }
+      return true;
+    };
+
+    const pick = (): VignetteId => {
+      // the flagship always opens a session; afterwards it re-enters the shuffle bag
+      if (!playedVignetteRef.current) {
+        playedVignetteRef.current = true;
+        lastVignetteRef.current = VIGNETTE_FIRST;
+        return VIGNETTE_FIRST;
+      }
+      if (bagRef.current.length === 0) {
+        const bag = shuffled(VIGNETTE_IDS);
+        // never the same twice in a row, even across a bag refill
+        if (bag.length > 1 && bag[0] === lastVignetteRef.current) {
+          [bag[0], bag[1]] = [bag[1], bag[0]];
+        }
+        bagRef.current = bag;
+      }
+      const next = bagRef.current.shift() as VignetteId;
+      lastVignetteRef.current = next;
+      return next;
+    };
+
+    const tick = window.setInterval(() => {
+      const now = Date.now();
+
+      if (!eligible()) {
+        cancelVignette();
+        return;
+      }
+      if (vignetteRef.current !== null) return;
+
+      const calm = playedVignetteRef.current ? VIGNETTE_CALM : VIGNETTE_FIRST_AFTER;
+      if (now - calmSinceRef.current < calm) return;
+      if (now < vignetteNextAtRef.current) return;
+
+      const id = pick();
+      vignetteRef.current = id;
+      setVignette(id);
+      // every vignette animation is `1 both` and ends on the base pose, so by the time
+      // this fires the sprite is already at rest and the unmount is invisible
+      vignetteTimerRef.current = window.setTimeout(() => {
+        vignetteTimerRef.current = null;
+        vignetteRef.current = null;
+        setVignette(null);
+        vignetteNextAtRef.current = Date.now() + nextGap();
+        calmSinceRef.current = Date.now();
+      }, VIGNETTE_MS[id] + 80);
+    }, VIGNETTE_TICK);
+
+    // a backgrounded tab must not play to nobody, and must not bank the quiet time either
+    const onVisibility = () => {
+      if (document.hidden) {
+        cancelVignette();
+      } else {
+        calmSinceRef.current = Date.now();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+
+    return () => {
+      window.clearInterval(tick);
+      document.removeEventListener('visibilitychange', onVisibility);
+      cancelVignette();
+    };
+  }, [parked, hidden, env.hoverNone, cancelVignette]);
 
   // hover hints from anywhere on the page
   useEffect(() => {
@@ -473,10 +666,11 @@ export const Companion: React.FC<CompanionProps> = ({ onOpenChat, hidden }) => {
     }
     passThroughRef.current = false;
     if (buttonRef.current) buttonRef.current.style.pointerEvents = '';
+    cancelVignette();
     setHint(null);
     setIdlePrompt(false);
     setHovered(false);
-  }, [hidden]);
+  }, [hidden, cancelVignette]);
 
   // an opacity-0 element still runs its css animations, so take it out of the tree
   useEffect(() => {
@@ -586,7 +780,12 @@ export const Companion: React.FC<CompanionProps> = ({ onOpenChat, hidden }) => {
         className="pointer-events-none absolute inset-0 block transition-transform duration-200 ease-out"
         style={{ transform: hovered ? 'scale(1.08)' : 'scale(1)' }}
       >
-        <CompanionSprite facing={facing} state={spriteState} size={SPRITE_SIZE} />
+        <CompanionSprite
+          facing={facing}
+          state={spriteState}
+          size={SPRITE_SIZE}
+          vignette={vignette}
+        />
       </span>
 
       <button

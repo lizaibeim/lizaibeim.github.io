@@ -12,5 +12,19 @@ compatibility_date = "2025-01-01"
 # keys are region-specific and return 401 against the other region.
 DASHSCOPE_BASE_URL = "https://dashscope.aliyuncs.com"
 
-# qwen-flash = cheapest, qwen-plus = balanced, qwen-max = best quality
+# qwen-flash = cheapest, qwen-plus = balanced, qwen-max = best quality.
+# the two calls the worker makes want different things, so they are set apart.
+
+# the answering call carries the visitor-facing prose, and plus is noticeably
+# better at holding the awkward instructions — the markdown ban, the approved
+# chinese glossary, answering the question actually asked — for a cost that is
+# still tiny at this traffic.
+ANSWER_MODEL = "qwen-plus"
+
+# the classifier only ever emits ALLOW or REFUSE at temperature 0, so flash is
+# ideal: fast, cheap, and deterministic enough for a binary verdict.
+CLASSIFIER_MODEL = "qwen-flash"
+
+# legacy single-model var, still read as the fallback for both of the above so
+# an older deployment keeps working if the two new vars are absent.
 MODEL = "qwen-flash"

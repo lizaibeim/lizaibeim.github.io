@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { isEndpointConfigured, streamAsk, type ChatMessage } from '../lib/ask';
 
 export interface ChatSurfaceProps {
@@ -8,6 +8,13 @@ export interface ChatSurfaceProps {
   intro?: string;
   autoFocus?: boolean;
   className?: string;
+  // lets a host show its "new chat" control only once there is one to discard
+  onHasMessagesChange?: (hasMessages: boolean) => void;
+}
+
+// what hosts can drive from outside; the trigger buttons live in the hosts
+export interface ChatSurfaceHandle {
+  reset(): void;
 }
 
 // the offline notice renders as jsx so the address stays a real mailto link
@@ -47,13 +54,147 @@ const stripMarkdown = (text: string): string =>
     .replace(/`([^`\n]+)`/g, '$1')
     .replace(/\n{3,}/g, '\n\n');
 
-export const ChatSurface: React.FC<ChatSurfaceProps> = ({
-  scope,
-  suggestions = DEFAULT_SUGGESTIONS,
-  intro = DEFAULT_INTRO,
-  autoFocus = false,
+// the site's link styling — the same underline the offline notice's mailto
+// carries, applied to every link found in an answer
+const LINK_CLASS =
+  'text-white/90 underline decoration-white/30 underline-offset-4 transition-colors hover:decoration-white';
+
+// hosts whose bare, protocol-less form actually turns up in answers: the
+// worker's wikipedia pointer, and the repositories, papers, and profiles the
+// knowledge base spells without a scheme. anything else has to carry an
+// explicit http(s):// before it is treated as a link.
+const LINK_HOSTS = [
+  'wikipedia.org',
+  'github.com',
+  'github.io',
+  'doi.org',
+  'arxiv.org',
+  'linkedin.com',
+  'ucph-cola.org',
+];
+
+const URL_SOURCE = `https?://[^\\s<>]+|(?:[a-z0-9-]+\\.)*(?:${LINK_HOSTS.join('|').replace(
+  /\./g,
+  '\\.',
+)})(?:/[^\\s<>]*)?`;
+
+// a match glued to the preceding character is part of something longer — an
+// address (zali@di.ku.dk), a path, a hostname we did not mean (notgithub.com)
+const GLUED_BEFORE = /[\w@./-]/;
+
+// punctuation that ends the sentence rather than the address
+const TRAILING_PUNCTUATION = /[.,;:!?'"’”\]}，。、；：！？）】》…]/;
+
+// peel sentence punctuation off the end of a match. a closing parenthesis only
+// counts as punctuation when the match does not open one itself, so
+// "(github.com/x)" loses its bracket while ".../Foo_(bar)" keeps it.
+const splitTrailingPunctuation = (match: string): [string, string] => {
+  let url = match;
+  let tail = '';
+
+  while (url) {
+    const last = url[url.length - 1];
+    if (last === ')') {
+      const opened = (url.match(/\(/g) || []).length;
+      const closed = (url.match(/\)/g) || []).length;
+      if (closed <= opened) break;
+    } else if (!TRAILING_PUNCTUATION.test(last)) {
+      break;
+    }
+    tail = last + tail;
+    url = url.slice(0, -1);
+  }
+
+  return [url, tail];
+};
+
+// turn the urls in an answer into real anchors at render time. elements are
+// constructed, never markup: nothing here goes near innerHTML, so a link in the
+// model's output cannot become anything but a link. text with no url comes back
+// as the same string it went in as.
+export function linkify(text: string): React.ReactNode {
+  const pattern = new RegExp(URL_SOURCE, 'gi');
+  const nodes: React.ReactNode[] = [];
+  let cursor = 0;
+
+  for (let match = pattern.exec(text); match; match = pattern.exec(text)) {
+    const start = match.index;
+    if (start > 0 && GLUED_BEFORE.test(text[start - 1])) continue;
+
+    const [url] = splitTrailingPunctuation(match[0]);
+    if (!url) continue;
+
+    if (start > cursor) nodes.push(text.slice(cursor, start));
+    nodes.push(
+      <a
+        key={`${start}-${url}`}
+        href={/^https?:\/\//i.test(url) ? url : `https://${url}`}
+        target="_blank"
+        rel="noreferrer"
+        className={LINK_CLASS}
+      >
+        {url}
+      </a>,
+    );
+
+    cursor = start + url.length;
+    // the punctuation we peeled off is text again, so rewind to it
+    pattern.lastIndex = cursor;
+  }
+
+  if (nodes.length === 0) return text;
+  if (cursor < text.length) nodes.push(text.slice(cursor));
+  return nodes;
+}
+
+// a plus inside a speech bubble: the usual "start over" icon, drawn as strokes so
+// it inherits whatever text colour the host button carries
+const NewChatIcon: React.FC = () => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.6}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+    focusable="false"
+    className="h-4 w-4"
+  >
+    <path d="M20.5 11.6a8.5 8.5 0 0 1-9.4 8.4L4 21l1-4.9a8.5 8.5 0 1 1 15.5-4.5Z" />
+    <path d="M12 8.9v5.2" />
+    <path d="M9.4 11.5h5.2" />
+  </svg>
+);
+
+// the reset trigger both hosts render; kept here so the icon and hit target stay
+// identical in the floating panel and the docked agent
+export const NewChatButton: React.FC<{ onClick: () => void; className?: string }> = ({
+  onClick,
   className = '',
-}) => {
+}) => (
+  <button
+    type="button"
+    onClick={onClick}
+    aria-label="Start a new chat"
+    title="Start a new chat"
+    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white/40 transition-colors hover:text-white focus-visible:text-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/40 ${className}`.trim()}
+  >
+    <NewChatIcon />
+  </button>
+);
+
+export const ChatSurface = forwardRef<ChatSurfaceHandle, ChatSurfaceProps>(function ChatSurface(
+  {
+    scope,
+    suggestions = DEFAULT_SUGGESTIONS,
+    intro = DEFAULT_INTRO,
+    autoFocus = false,
+    className = '',
+    onHasMessagesChange,
+  },
+  ref,
+) {
   const scopeKey = scope || SITE_SCOPE;
 
   const [messages, setMessages] = useState<SurfaceMessage[]>(() => transcripts.get(scopeKey) ?? []);
@@ -73,6 +214,24 @@ export const ChatSurface: React.FC<ChatSurfaceProps> = ({
     transcripts.set(scopeRef.current, next);
     setMessages(next);
   };
+
+  // the field is only worth raising (with its soft keyboard) on pointer devices
+  const canRaiseInput = () =>
+    autoFocus && window.matchMedia('(min-width: 768px) and (pointer: fine)').matches;
+
+  // drops the whole thread — including any refusal the classifier would keep
+  // reading as an off-topic conversation — and hands back the empty state
+  const reset = () => {
+    abortRef.current?.abort();
+    abortRef.current = null;
+    stickToBottomRef.current = true;
+    commit([]);
+    setInput('');
+    setStreaming(false);
+    if (canRaiseInput()) inputRef.current?.focus();
+  };
+
+  useImperativeHandle(ref, () => ({ reset }));
 
   const send = async (raw: string) => {
     const text = raw.trim();
@@ -171,13 +330,26 @@ export const ChatSurface: React.FC<ChatSurfaceProps> = ({
     element.scrollTop = element.scrollHeight;
   }, [messages, streaming]);
 
-  // only raise the field (and a soft keyboard) on pointer devices
+  // wait out the open transition before taking focus
   useEffect(() => {
-    if (!autoFocus) return;
-    if (!window.matchMedia('(min-width: 768px) and (pointer: fine)').matches) return;
+    if (!canRaiseInput()) return;
     const timer = window.setTimeout(() => inputRef.current?.focus(), 360);
     return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoFocus]);
+
+  // tell the host whether there is a conversation worth clearing, without making
+  // the host memoise its callback
+  const hasMessages = messages.length > 0;
+  const notifyRef = useRef(onHasMessagesChange);
+
+  useEffect(() => {
+    notifyRef.current = onHasMessagesChange;
+  });
+
+  useEffect(() => {
+    notifyRef.current?.(hasMessages);
+  }, [hasMessages]);
 
   useEffect(() => () => abortRef.current?.abort(), []);
 
@@ -239,7 +411,7 @@ export const ChatSurface: React.FC<ChatSurfaceProps> = ({
                 </>
               ) : (
                 <>
-                  {stripMarkdown(message.content)}
+                  {linkify(stripMarkdown(message.content))}
                   {streaming && isLast && <span className="animate-pulse">▍</span>}
                 </>
               )}
@@ -279,4 +451,4 @@ export const ChatSurface: React.FC<ChatSurfaceProps> = ({
       </form>
     </div>
   );
-};
+});

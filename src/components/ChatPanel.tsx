@@ -1,6 +1,6 @@
-import React, { useEffect, useLayoutEffect, useRef } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { ChatSurface } from './ChatSurface';
+import { ChatSurface, NewChatButton, type ChatSurfaceHandle } from './ChatSurface';
 
 interface ChatPanelProps {
   open: boolean;
@@ -11,6 +11,8 @@ interface ChatPanelProps {
 // dialog affordances. the conversation itself lives in ChatSurface
 export const ChatPanel: React.FC<ChatPanelProps> = ({ open, onClose }) => {
   const panelRef = useRef<HTMLDivElement>(null);
+  const surfaceRef = useRef<ChatSurfaceHandle>(null);
+  const [hasMessages, setHasMessages] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -49,17 +51,25 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ open, onClose }) => {
               <div className="text-[10px] tracking-[0.3em] uppercase text-white/40">Ask</div>
               <div className="font-display italic text-xl text-white/90 leading-tight">Zaibei.</div>
             </div>
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label="Close chat"
-              className="-mr-2 -mt-1 flex h-8 w-8 items-center justify-center text-lg leading-none text-white/40 transition-colors hover:text-white"
-            >
-              ×
-            </button>
+            <div className="-mr-2 -mt-1 flex shrink-0 items-center gap-1">
+              {hasMessages && <NewChatButton onClick={() => surfaceRef.current?.reset()} />}
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="Close chat"
+                className="flex h-8 w-8 shrink-0 items-center justify-center text-lg leading-none text-white/40 transition-colors hover:text-white"
+              >
+                ×
+              </button>
+            </div>
           </div>
 
-          <ChatSurface autoFocus className="flex-1" />
+          <ChatSurface
+            ref={surfaceRef}
+            autoFocus
+            onHasMessagesChange={setHasMessages}
+            className="flex-1"
+          />
         </motion.div>
       )}
     </AnimatePresence>

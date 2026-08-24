@@ -1,6 +1,6 @@
-import React, { useLayoutEffect, useRef } from 'react';
+import React, { useLayoutEffect, useRef, useState } from 'react';
 import { CompanionSprite } from './CompanionSprite';
-import { ChatSurface } from './ChatSurface';
+import { ChatSurface, NewChatButton, type ChatSurfaceHandle } from './ChatSurface';
 import { HOME_HASH, navigate } from '../lib/route';
 import type { Project, ProjectPublication } from '../lib/projects';
 
@@ -25,6 +25,8 @@ const Label: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 export const ProjectPage: React.FC<ProjectPageProps> = ({ project }) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const pageRef = useRef<HTMLDivElement>(null);
+  const surfaceRef = useRef<ChatSurfaceHandle>(null);
+  const [hasMessages, setHasMessages] = useState(false);
 
   // arriving on a project always starts at the top of the writing, even when the
   // visitor came from another project's page
@@ -59,10 +61,18 @@ export const ProjectPage: React.FC<ProjectPageProps> = ({ project }) => {
                 {project.name}.
               </div>
             </div>
+            {hasMessages && (
+              <NewChatButton
+                onClick={() => surfaceRef.current?.reset()}
+                className="-mr-2 ml-auto"
+              />
+            )}
           </div>
 
           <ChatSurface
+            ref={surfaceRef}
             scope={project.id}
+            onHasMessagesChange={setHasMessages}
             suggestions={project.suggestions}
             intro={`An assistant reading the ${project.name} page with you. Ask about this project, or about anything else in Zaibei's work.`}
             className="flex-1 min-h-0"
