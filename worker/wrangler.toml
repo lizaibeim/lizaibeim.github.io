@@ -1,0 +1,16 @@
+name = "ask-zaibei"
+main = "worker.js"
+compatibility_date = "2025-01-01"
+
+# the dashscope api key is NOT set here — it is a secret, so it must never be
+# committed. install it once per deployment with:
+#   npx wrangler secret put DASHSCOPE_API_KEY
+
+[vars]
+# china (beijing) endpoint — matches the console this key was issued from.
+# the international (singapore) endpoint is https://dashscope-intl.aliyuncs.com;
+# keys are region-specific and return 401 against the other region.
+DASHSCOPE_BASE_URL = "https://dashscope.aliyuncs.com"
+
+# qwen-flash = cheapest, qwen-plus = balanced, qwen-max = best quality
+MODEL = "qwen-flash"

@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'motion/react';
+import { PROJECTS, type Project } from '../lib/projects';
+import { navigate, projectHref } from '../lib/route';
 
 // Elegant wave animation for "unseen rhythms"
 const AnimatedRhythms = () => {
@@ -29,6 +31,63 @@ const AnimatedRhythms = () => {
   );
 };
 
+// the two carousels: the research line first, the older experiments after. every
+// card is driven by the catalog, so the copy here cannot drift from the detail pages
+const EARLIER_IDS = new Set<Project['id']>(['motionmatching', 'casperffg']);
+const SELECTED_PROJECTS = PROJECTS.filter((project) => !EARLIER_IDS.has(project.id));
+const EARLIER_PROJECTS = PROJECTS.filter((project) => EARLIER_IDS.has(project.id));
+
+// a real anchor, so middle-click and copy-link still work; the click handler just
+// saves the browser a full reload on a hash it can route in place
+const ProjectCard: React.FC<{ project: Project; className?: string }> = ({
+  project,
+  className = '',
+}) => (
+  <a
+    href={projectHref(project.id)}
+    onClick={(event) => {
+      event.preventDefault();
+      navigate(projectHref(project.id));
+    }}
+    data-companion-hint={`Opens the ${project.name} project page`}
+    className={`snap-start shrink-0 w-[85vw] md:w-[40vw] border-t border-white/10 pt-8 group cursor-pointer block ${className}`.trim()}
+  >
+    <div className="text-[10px] text-white/30 tracking-[0.2em] uppercase mb-4">{project.category}</div>
+    <h3 className="text-xl text-white/80 font-light tracking-widest uppercase mb-4 group-hover:text-white transition-colors">
+      {project.name}
+    </h3>
+    <p className="text-xs text-white/60 leading-relaxed tracking-wide">{project.tagline}</p>
+  </a>
+);
+
+// js-driven eased scroll for nav jumps; native smooth scrolling (css scroll-behavior or
+// scrollIntoView) proved unreliable for nested scroll containers, so each frame writes
+// scrollTop directly, which also keeps scroll events (nav highlight) flowing
+let navScrollFrame = 0;
+const scrollToSection = (id: string) => {
+  const container = document.getElementById('main-scroll-container');
+  const target = document.getElementById(id);
+  if (!container || !target) return;
+  cancelAnimationFrame(navScrollFrame);
+  const start = container.scrollTop;
+  const end = Math.min(target.offsetTop, container.scrollHeight - container.clientHeight);
+  const distance = end - start;
+  if (distance === 0) return;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    container.scrollTop = end;
+    return;
+  }
+  const duration = Math.min(1100, 350 + Math.abs(distance) * 0.3);
+  const t0 = performance.now();
+  const ease = (t: number) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
+  const step = (now: number) => {
+    const p = Math.min(1, (now - t0) / duration);
+    container.scrollTop = start + distance * ease(p);
+    if (p < 1) navScrollFrame = requestAnimationFrame(step);
+  };
+  navScrollFrame = requestAnimationFrame(step);
+};
+
 export const AppContent: React.FC = () => {
   const [audioEnabled, setAudioEnabled] = useState(false);
   const [activeSection, setActiveSection] = useState('home');
@@ -50,19 +109,30 @@ export const AppContent: React.FC = () => {
 
   // Track active section for navigation highlight
   useEffect(() => {
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          setActiveSection(entry.target.id);
-        }
-      });
-    }, { threshold: 0.4 }); // Trigger when 40% of section is visible
+    const container = document.getElementById('main-scroll-container');
+    if (!container) return;
 
-    const sections = document.querySelectorAll('section');
-    sections.forEach(sec => observer.observe(sec));
+    const sections = Array.from(container.querySelectorAll('section'));
+    if (sections.length === 0) return;
+
+    // the active section is the last one whose top has passed the vertical middle
+    // of the viewport; reading scroll position directly keeps this deterministic
+    const updateActiveSection = () => {
+      const midpoint = container.scrollTop + container.clientHeight * 0.5;
+      let current = sections[0];
+      for (const sec of sections) {
+        if (sec.offsetTop <= midpoint) {
+          current = sec;
+        }
+      }
+      setActiveSection(current.id);
+    };
+
+    updateActiveSection();
+    container.addEventListener('scroll', updateActiveSection, { passive: true });
 
     return () => {
-      sections.forEach(sec => observer.unobserve(sec));
+      container.removeEventListener('scroll', updateActiveSection);
     };
   }, []);
 
@@ -182,30 +252,36 @@ export const AppContent: React.FC = () => {
     }
   };
 
-  const setFocus = (focused: boolean) => {
-    window.dispatchEvent(new CustomEvent('set-focus', { detail: { focused } }));
-    if (focused) {
-      playWindChime();
-    }
+  // hover detail on the home section: a chime on enter, nothing on leave
+  const playFocusChime = () => {
+    playWindChime();
   };
 
   return (
     <>
       {/* Fixed UI Layer */}
-      <header className="fixed top-6 left-6 right-6 md:top-8 md:left-16 md:right-16 z-50 pointer-events-auto flex flex-wrap justify-between items-center gap-y-4 mix-blend-screen">
-        <button 
+      {/* the band is transparent, so only the controls themselves may capture hits */}
+      <header className="fixed top-6 left-6 right-6 md:top-8 md:left-16 md:right-16 z-50 pointer-events-none flex flex-wrap justify-between items-center gap-y-4 mix-blend-screen">
+        <button
           onClick={toggleAudio}
-          className="text-[10px] md:text-xs text-white/50 hover:text-white transition-colors tracking-[0.2em] uppercase whitespace-nowrap"
+          data-companion-hint="Toggles a soft ambient drone on the home screen"
+          className="pointer-events-auto text-[10px] md:text-xs text-white/50 hover:text-white transition-colors tracking-[0.2em] uppercase whitespace-nowrap"
         >
           [ SOUND: {audioEnabled ? 'ON' : 'OFF'} ]
         </button>
 
-        <nav className="flex gap-4 md:gap-12 text-[10px] md:text-xs tracking-[0.2em] uppercase flex-wrap justify-end">
+        <nav className="pointer-events-none flex gap-4 md:gap-12 text-[10px] md:text-xs tracking-[0.2em] uppercase flex-wrap justify-end">
           {['home', 'about', 'projects', 'resume'].map((sec) => (
-            <a 
+            <a
               key={sec}
-              href={`#${sec}`} 
-              className={`transition-all duration-500 ${activeSection === sec ? 'text-white font-medium drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]' : 'text-white/30 hover:text-white/80'}`}
+              href={`#${sec}`}
+              data-companion-hint={`Takes you to ${sec}`}
+              onClick={(e) => {
+                e.preventDefault();
+                scrollToSection(sec);
+                history.replaceState(null, '', `#${sec}`);
+              }}
+              className={`pointer-events-auto transition-all duration-500 ${activeSection === sec ? 'text-white font-medium drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]' : 'text-white/30 hover:text-white/80'}`}
             >
               {sec}
             </a>
@@ -219,10 +295,9 @@ export const AppContent: React.FC = () => {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 2, delay: 0.5, ease: "easeOut" }}
+          transition={{ duration: 0.8, delay: 0.1, ease: "easeOut" }}
           className="pointer-events-auto w-max mt-16 md:mt-0"
-          onMouseEnter={() => setFocus(true)}
-          onMouseLeave={() => setFocus(false)}
+          onMouseEnter={playFocusChime}
         >
           <h1 className="text-sm md:text-base font-light tracking-[0.3em] mb-2 text-white/90 uppercase flex items-center gap-3">
             Zaibei Li <span className="text-white/90 text-xs tracking-widest font-sans">李再倍</span>
@@ -232,16 +307,15 @@ export const AppContent: React.FC = () => {
         <motion.div
           initial={{ opacity: 0, filter: 'blur(10px)' }}
           animate={{ opacity: 1, filter: 'blur(0px)' }}
-          transition={{ duration: 3, delay: 1, ease: "easeOut" }}
+          transition={{ duration: 1.1, delay: 0.25, ease: "easeOut" }}
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center w-full max-w-3xl pointer-events-auto px-6"
-          onMouseEnter={() => setFocus(true)}
-          onMouseLeave={() => setFocus(false)}
+          onMouseEnter={playFocusChime}
         >
           <h2 className="font-display italic text-3xl md:text-5xl lg:text-6xl text-white/80 font-light leading-tight mb-8 cursor-default">
             Capturing the <AnimatedRhythms /> <br className="hidden md:block"/> 
             of human collaboration.
           </h2>
-          <p className="text-xs md:text-sm text-white/40 font-light tracking-widest leading-loose uppercase">
+          <p className="text-xs md:text-sm text-white/55 font-light tracking-widest leading-loose uppercase">
             Through sensors, signals, and silence. <br/>
             Bridging the physical and the analytical.
           </p>
@@ -250,13 +324,12 @@ export const AppContent: React.FC = () => {
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 2, delay: 1.5, ease: "easeOut" }}
-          className="flex flex-col md:flex-row justify-between items-start md:items-end gap-8 pointer-events-auto w-full"
+          transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
+          className="flex flex-col md:flex-row justify-between items-start md:items-end gap-8 pointer-events-auto w-full md:pr-28"
         >
           <div 
             className="text-[10px] md:text-xs text-white/30 tracking-[0.2em] uppercase leading-loose cursor-default"
-            onMouseEnter={() => setFocus(true)}
-            onMouseLeave={() => setFocus(false)}
+            onMouseEnter={playFocusChime}
           >
             <span className="text-white/50 block mb-2">[ Modalities ]</span>
             Video / Audio / Motion <br/>
@@ -264,9 +337,9 @@ export const AppContent: React.FC = () => {
           </div>
           
           <a 
-            href="mailto:zali@di.ku.dk" 
-            onMouseEnter={() => setFocus(true)}
-            onMouseLeave={() => setFocus(false)}
+            href="mailto:zali@di.ku.dk"
+            onMouseEnter={playFocusChime}
+            data-companion-hint="Opens your mail app to write Zaibei"
             className="text-[10px] md:text-xs text-white/50 hover:text-white transition-all duration-500 tracking-[0.2em] uppercase border-b border-white/20 hover:border-white pb-1"
           >
             Initiate Sync
@@ -281,7 +354,7 @@ export const AppContent: React.FC = () => {
             <span className="font-sans not-italic text-2xl md:text-3xl text-white/80 tracking-widest">你好,</span>
             Hello.
           </h2>
-          <div className="space-y-8 text-xs md:text-sm text-white/50 font-light tracking-widest leading-loose uppercase">
+          <div className="space-y-8 text-sm md:text-base text-white/70 font-light tracking-wide leading-relaxed">
             <p>
               I am a doctoral researcher in computer science at the University of Copenhagen. I spend most of my time building multimodal sensing systems, wearable prototypes, and interactive AI tools that help make human collaboration easier to understand.
             </p>
@@ -320,35 +393,9 @@ export const AppContent: React.FC = () => {
           <div className="mb-14">
             <p className="text-[10px] text-white/30 tracking-[0.2em] uppercase mb-6">Selected Projects</p>
             <div ref={projectsScrollRef} className="flex overflow-x-auto snap-x snap-mandatory gap-8 md:gap-16 pb-8 hide-scrollbar w-full">
-              
-              {/* Project CoLA */}
-              <a href="https://ucph-cola.org" target="_blank" rel="noreferrer" className="snap-start shrink-0 w-[85vw] md:w-[40vw] border-t border-white/10 pt-8 group cursor-pointer block">
-                <div className="text-[10px] text-white/30 tracking-[0.2em] uppercase mb-4">Platform // Wearable & AI</div>
-                <h3 className="text-xl text-white/80 font-light tracking-widest uppercase mb-4 group-hover:text-white transition-colors">CoLA</h3>
-                <p className="text-xs text-white/40 leading-loose tracking-widest uppercase">A wearable multimodal AI platform for egocentric sensing, real-time behavioral analysis, and interactive facilitation in collaborative learning settings.</p>
-              </a>
-              
-              {/* Project 1 */}
-              <a href="https://github.com/ucph-ccs/OpenMMLA" target="_blank" rel="noreferrer" className="snap-start shrink-0 w-[85vw] md:w-[40vw] border-t border-white/10 pt-8 group cursor-pointer block">
-                <div className="text-[10px] text-white/30 tracking-[0.2em] uppercase mb-4">Toolkit // IoT & Analytics</div>
-                <h3 className="text-xl text-white/80 font-light tracking-widest uppercase mb-4 group-hover:text-white transition-colors">OpenMMLA</h3>
-                <p className="text-xs text-white/40 leading-loose tracking-widest uppercase">An open-source IoT toolkit for multimodal data collection, synchronization, and analytics across real-world collaborative environments.</p>
-              </a>
-
-              {/* Project 2 */}
-              <a href="https://github.com/ucph-ccs/mbox-uber" target="_blank" rel="noreferrer" className="snap-start shrink-0 w-[85vw] md:w-[40vw] border-t border-white/10 pt-8 group cursor-pointer block">
-                <div className="text-[10px] text-white/30 tracking-[0.2em] uppercase mb-4">Prototype // Multimodal Sensing</div>
-                <h3 className="text-xl text-white/80 font-light tracking-widest uppercase mb-4 group-hover:text-white transition-colors">mBox</h3>
-                <p className="text-xs text-white/40 leading-loose tracking-widest uppercase">An early multimodal sensing prototype featuring sociometric badges, audio pipelines, and AprilTag-based spatial tracking that later evolved into OpenMMLA.</p>
-              </a>
-
-              {/* Project 3 */}
-              <a href="https://github.com/lizaibeim/mmla-audio" target="_blank" rel="noreferrer" className="snap-start shrink-0 w-[85vw] md:w-[40vw] border-t border-white/10 pt-8 group cursor-pointer block">
-                <div className="text-[10px] text-white/30 tracking-[0.2em] uppercase mb-4">Pipeline // Speech Analytics</div>
-                <h3 className="text-xl text-white/80 font-light tracking-widest uppercase mb-4 group-hover:text-white transition-colors">MMLA-Audio</h3>
-                <p className="text-xs text-white/40 leading-loose tracking-widest uppercase">A real-time speech analytics pipeline with speaker recognition and speech overlap detection, optimized for edge deployment.</p>
-              </a>
-
+              {SELECTED_PROJECTS.map((project) => (
+                <ProjectCard key={project.id} project={project} />
+              ))}
             </div>
           </div>
 
@@ -373,19 +420,9 @@ export const AppContent: React.FC = () => {
               </div>
             </div>
             <div ref={earlierProjectsScrollRef} className="flex overflow-x-auto snap-x snap-mandatory gap-8 md:gap-16 pb-8 hide-scrollbar w-full">
-              
-              <a href="https://github.com/lizaibeim/motion-matching" target="_blank" rel="noreferrer" className="snap-start shrink-0 w-[85vw] md:w-[40vw] border-t border-white/10 pt-8 group cursor-pointer block min-w-0">
-                <div className="text-[10px] text-white/30 tracking-[0.2em] uppercase mb-4">System // C# & Unity</div>
-                <h3 className="text-xl text-white/80 font-light tracking-widest uppercase mb-4 group-hover:text-white transition-colors">MotionMatching</h3>
-                <p className="text-xs text-white/40 leading-loose tracking-widest uppercase">A real-time motion matching system on Unity implemented in C#.</p>
-              </a>
-
-              <a href="https://github.com/lizaibeim/casper-ffg" target="_blank" rel="noreferrer" className="snap-start shrink-0 w-[85vw] md:w-[40vw] border-t border-white/10 pt-8 group cursor-pointer block min-w-0">
-                <div className="text-[10px] text-white/30 tracking-[0.2em] uppercase mb-4">Earlier Work // Blockchain</div>
-                <h3 className="text-xl text-white/80 font-light tracking-widest uppercase mb-4 group-hover:text-white transition-colors">CasperFFG</h3>
-                <p className="text-xs text-white/40 leading-loose tracking-widest uppercase">An undergraduate capstone project exploring Casper FFG consensus with a Python-based simulated blockchain implementation.</p>
-              </a>
-
+              {EARLIER_PROJECTS.map((project) => (
+                <ProjectCard key={project.id} project={project} className="min-w-0" />
+              ))}
             </div>
           </div>
         </div>
@@ -421,43 +458,43 @@ export const AppContent: React.FC = () => {
           <div className="snap-start shrink-0 w-[70vw] md:w-[25vw] flex flex-col">
             <div className="text-[10px] text-white/30 tracking-[0.2em] uppercase border-b border-white/10 pb-4 mb-6">Nov 2025 - Jan 2026</div>
             <h3 className="text-sm text-white/80 tracking-widest uppercase mb-2">Visiting Researcher</h3>
-            <p className="text-xs text-white/40 leading-loose tracking-widest uppercase mb-4">Hiroshima City University</p>
-            <p className="text-[10px] text-white/30 leading-relaxed tracking-wider">Prototyped an egocentric multimodal sensing setup using mobile devices, embedded sensors, and smart glasses, then developed CoLA with an interactive AI facilitator for real-time collaborative learning analytics.</p>
+            <p className="text-xs text-white/55 leading-loose tracking-widest uppercase mb-4">Hiroshima City University</p>
+            <p className="text-xs text-white/60 leading-relaxed tracking-wide">Prototyped an egocentric multimodal sensing setup using mobile devices, embedded sensors, and smart glasses, then developed CoLA with an interactive AI facilitator for real-time collaborative learning analytics.</p>
           </div>
 
           <div className="snap-start shrink-0 w-[70vw] md:w-[25vw] flex flex-col">
             <div className="text-[10px] text-white/30 tracking-[0.2em] uppercase border-b border-white/10 pb-4 mb-6">Feb 2024 - Present</div>
             <h3 className="text-sm text-white/80 tracking-widest uppercase mb-2">Doctoral Researcher</h3>
-            <p className="text-xs text-white/40 leading-loose tracking-widest uppercase mb-4">University of Copenhagen</p>
-            <p className="text-[10px] text-white/30 leading-relaxed tracking-wider">Designed and developed OpenMMLA, a reusable IoT-based toolkit for multimodal data collection, synchronization, and analytics, plus interactive pipelines for sensor fusion, behavioral modeling, and visualization.</p>
+            <p className="text-xs text-white/55 leading-loose tracking-widest uppercase mb-4">University of Copenhagen</p>
+            <p className="text-xs text-white/60 leading-relaxed tracking-wide">Designed and developed OpenMMLA, a reusable IoT-based toolkit for multimodal data collection, synchronization, and analytics, plus interactive pipelines for sensor fusion, behavioral modeling, and visualization.</p>
           </div>
 
           <div className="snap-start shrink-0 w-[70vw] md:w-[25vw] flex flex-col">
             <div className="text-[10px] text-white/30 tracking-[0.2em] uppercase border-b border-white/10 pb-4 mb-6">Jun 2023 - Feb 2024</div>
             <h3 className="text-sm text-white/80 tracking-widest uppercase mb-2">Research Assistant</h3>
-            <p className="text-xs text-white/40 leading-loose tracking-widest uppercase mb-4">University of Copenhagen</p>
-            <p className="text-[10px] text-white/30 leading-relaxed tracking-wider">Prototyped sociometric badges and AprilTag-based spatial tracking, then built early data collection and processing workflows for mBox, the prototype that evolved into OpenMMLA.</p>
+            <p className="text-xs text-white/55 leading-loose tracking-widest uppercase mb-4">University of Copenhagen</p>
+            <p className="text-xs text-white/60 leading-relaxed tracking-wide">Prototyped sociometric badges and AprilTag-based spatial tracking, then built early data collection and processing workflows for mBox, the prototype that evolved into OpenMMLA.</p>
           </div>
 
           <div className="snap-start shrink-0 w-[70vw] md:w-[25vw] flex flex-col">
             <div className="text-[10px] text-white/30 tracking-[0.2em] uppercase border-b border-white/10 pb-4 mb-6">2022</div>
             <h3 className="text-sm text-white/80 tracking-widest uppercase mb-2">Master of Science</h3>
-            <p className="text-xs text-white/40 leading-loose tracking-widest uppercase mb-4">University of Copenhagen</p>
-            <p className="text-[10px] text-white/30 leading-relaxed tracking-wider">Computer Science.</p>
+            <p className="text-xs text-white/55 leading-loose tracking-widest uppercase mb-4">University of Copenhagen</p>
+            <p className="text-xs text-white/60 leading-relaxed tracking-wide">Computer Science.</p>
           </div>
 
           <div className="snap-start shrink-0 w-[70vw] md:w-[25vw] flex flex-col">
             <div className="text-[10px] text-white/30 tracking-[0.2em] uppercase border-b border-white/10 pb-4 mb-6">2019</div>
             <h3 className="text-sm text-white/80 tracking-widest uppercase mb-2">Bachelor of Science</h3>
-            <p className="text-xs text-white/40 leading-loose tracking-widest uppercase mb-4">Hong Kong Polytechnic University</p>
-            <p className="text-[10px] text-white/30 leading-relaxed tracking-wider">Information Technology.</p>
+            <p className="text-xs text-white/55 leading-loose tracking-widest uppercase mb-4">Hong Kong Polytechnic University</p>
+            <p className="text-xs text-white/60 leading-relaxed tracking-wide">Information Technology.</p>
           </div>
 
           <div className="snap-start shrink-0 w-[70vw] md:w-[25vw] flex flex-col">
             <div className="text-[10px] text-white/30 tracking-[0.2em] uppercase border-b border-white/10 pb-4 mb-6">2017</div>
             <h3 className="text-sm text-white/80 tracking-widest uppercase mb-2">Exchange</h3>
-            <p className="text-xs text-white/40 leading-loose tracking-widest uppercase mb-4">The Korea Advanced Institute of Science and Technology</p>
-            <p className="text-[10px] text-white/30 leading-relaxed tracking-wider">Computer Science.</p>
+            <p className="text-xs text-white/55 leading-loose tracking-widest uppercase mb-4">The Korea Advanced Institute of Science and Technology</p>
+            <p className="text-xs text-white/60 leading-relaxed tracking-wide">Computer Science.</p>
           </div>
 
         </div>
@@ -466,15 +503,15 @@ export const AppContent: React.FC = () => {
           <div className="flex flex-col gap-2">
             <p className="text-[10px] text-white/30 tracking-[0.2em] uppercase">© 2026 Zaibei Li</p>
             <div className="flex flex-wrap gap-4">
-              <a href="mailto:zali@di.ku.dk" className="text-[10px] text-white/50 hover:text-white tracking-[0.2em] uppercase transition-colors">zali@di.ku.dk</a>
+              <a href="mailto:zali@di.ku.dk" data-companion-hint="Writes Zaibei an email" className="text-[10px] text-white/50 hover:text-white tracking-[0.2em] uppercase transition-colors">zali@di.ku.dk</a>
               <span className="text-white/20 hidden md:inline">|</span>
-              <a href="tel:+4591858214" className="text-[10px] text-white/50 hover:text-white tracking-[0.2em] uppercase transition-colors">+45 91858214</a>
+              <a href="tel:+4591858214" data-companion-hint="Calls Zaibei" className="text-[10px] text-white/50 hover:text-white tracking-[0.2em] uppercase transition-colors">+45 91858214</a>
             </div>
           </div>
-          <div className="flex flex-wrap gap-4">
-            <a href="https://www.linkedin.com/in/zaibei-eric-li/" target="_blank" rel="noreferrer" className="text-[10px] text-white/50 hover:text-white tracking-[0.2em] uppercase transition-colors">LinkedIn</a>
+          <div className="flex flex-wrap gap-4 md:pr-28">
+            <a href="https://www.linkedin.com/in/zaibei-eric-li/" target="_blank" rel="noreferrer" data-companion-hint="Opens his LinkedIn profile" className="text-[10px] text-white/50 hover:text-white tracking-[0.2em] uppercase transition-colors">LinkedIn</a>
             <span className="text-white/20 hidden md:inline">|</span>
-            <a href="/cv-zaibei.pdf" download="Zaibei_Li_CV.pdf" className="text-[10px] text-white/50 hover:text-white tracking-[0.2em] uppercase transition-colors">Download Full CV</a>
+            <a href="/cv-zaibei.pdf" download="Zaibei_Li_CV.pdf" data-companion-hint="Downloads his CV as a PDF" className="text-[10px] text-white/50 hover:text-white tracking-[0.2em] uppercase transition-colors">Download Full CV</a>
           </div>
         </div>
       </section>
