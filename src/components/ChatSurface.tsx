@@ -396,7 +396,8 @@ export const ChatSurface = forwardRef<ChatSurfaceHandle, ChatSurfaceProps>(funct
           return (
             <div
               key={index}
-              className="max-w-[92%] self-start text-sm text-white/75 leading-relaxed whitespace-pre-wrap"
+              // break-words keeps a long unbroken url (the wikipedia pointer) inside the panel
+              className="max-w-[92%] self-start text-sm text-white/75 leading-relaxed whitespace-pre-wrap break-words"
             >
               {message.error ? (
                 <>
