@@ -1,5 +1,11 @@
-import React, { useLayoutEffect, useRef, useState } from 'react';
-import { CompanionSprite } from './CompanionSprite';
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import {
+  CompanionSprite,
+  VIGNETTE_IDS,
+  VIGNETTE_MS,
+  spriteSlotOffset,
+  type VignetteId,
+} from './CompanionSprite';
 import { ChatSurface, NewChatButton, type ChatSurfaceHandle } from './ChatSurface';
 import { HOME_HASH, navigate } from '../lib/route';
 import type { Project, ProjectPublication } from '../lib/projects';
@@ -11,6 +17,32 @@ interface ProjectPageProps {
 // the sprite is decoration here: it stands by the header instead of roaming,
 // so the page never mounts the follower or the floating panel
 const SPRITE_SIZE = 64;
+
+// the sprite's own timer is `1 both`, so it is already back on the base pose by the time
+// the prop is dropped; the margin only covers timer jitter
+const VIGNETTE_TAIL = 80;
+
+// one string for the tooltip and the accessible name: a hover label the screen reader
+// cannot repeat back is two different buttons depending on how you meet it
+const POKE_LABEL = 'Poke me';
+
+// the sprite keeps every vignette animation behind `prefers-reduced-motion: no-preference`,
+// so on a reduce setting a click could not show anything: offer no control at all rather
+// than a dead one
+const useReduceMotion = () => {
+  const [reduce, setReduce] = useState(
+    () =>
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+  );
+  useEffect(() => {
+    const query = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const sync = () => setReduce(query.matches);
+    query.addEventListener('change', sync);
+    return () => query.removeEventListener('change', sync);
+  }, []);
+  return reduce;
+};
 
 // "LAK 2025" already carries its year; only append one the venue is missing
 const venueLine = (publication: ProjectPublication): string =>
@@ -28,12 +60,67 @@ export const ProjectPage: React.FC<ProjectPageProps> = ({ project }) => {
   const surfaceRef = useRef<ChatSurfaceHandle>(null);
   const [hasMessages, setHasMessages] = useState(false);
 
+  const reduceMotion = useReduceMotion();
+  const [vignette, setVignette] = useState<VignetteId | null>(null);
+  // the click handler needs what is playing right now, and state would hand it the value
+  // from the render it was created in
+  const vignetteRef = useRef<VignetteId | null>(null);
+  const vignetteTimerRef = useRef<number | null>(null);
+  // a poke mid-play has to let the old animation unmount before the new one mounts, so the
+  // second half of the swap is owed to the next frame
+  const vignetteRafRef = useRef<number | null>(null);
+
+  const clearVignette = useCallback(() => {
+    if (vignetteTimerRef.current !== null) {
+      window.clearTimeout(vignetteTimerRef.current);
+      vignetteTimerRef.current = null;
+    }
+    if (vignetteRafRef.current !== null) {
+      cancelAnimationFrame(vignetteRafRef.current);
+      vignetteRafRef.current = null;
+    }
+    vignetteRef.current = null;
+    setVignette(null);
+  }, []);
+
+  // one poke, one animation. the scheduler on the home page only ever moves null -> id, and
+  // that unmount is what restarts the css, so a click mid-play takes the same route: drop
+  // what is playing in this commit, mount the next one a frame later.
+  const playVignette = useCallback(() => {
+    const pool = VIGNETTE_IDS.filter((id) => id !== vignetteRef.current);
+    const id = pool[Math.floor(Math.random() * pool.length)];
+    if (vignetteTimerRef.current !== null) {
+      window.clearTimeout(vignetteTimerRef.current);
+      vignetteTimerRef.current = null;
+    }
+    if (vignetteRafRef.current !== null) cancelAnimationFrame(vignetteRafRef.current);
+    vignetteRef.current = null;
+    setVignette(null);
+    vignetteRafRef.current = requestAnimationFrame(() => {
+      vignetteRafRef.current = null;
+      vignetteRef.current = id;
+      setVignette(id);
+      vignetteTimerRef.current = window.setTimeout(() => {
+        vignetteTimerRef.current = null;
+        vignetteRef.current = null;
+        setVignette(null);
+      }, VIGNETTE_MS[id] + VIGNETTE_TAIL);
+    });
+  }, []);
+
   // arriving on a project always starts at the top of the writing, even when the
-  // visitor came from another project's page
+  // visitor came from another project's page.
+  //
+  // routing between projects re-renders this component rather than remounting it, so the
+  // running animation and its timers have to be dropped by hand — the cleanup covers the
+  // unmount as well. it belongs to the layout effect and not a passive one: a passive
+  // cleanup lands after the browser has already painted a frame of the old animation on
+  // the new project's page.
   useLayoutEffect(() => {
     if (contentRef.current) contentRef.current.scrollTop = 0;
     if (pageRef.current) pageRef.current.scrollTop = 0;
-  }, [project.id]);
+    return clearVignette;
+  }, [project.id, clearVignette]);
 
   const backHome = (event: React.MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault();
@@ -52,15 +139,51 @@ export const ProjectPage: React.FC<ProjectPageProps> = ({ project }) => {
           className="order-2 flex min-h-[70vh] flex-col border-t border-white/10 md:order-1 md:h-full md:min-h-0 md:border-t-0 md:border-r md:border-white/10"
         >
           <div className="flex shrink-0 items-center gap-4 border-b border-white/10 px-6 py-5 md:px-8 md:py-6">
-            <span aria-hidden="true" className="shrink-0">
-              <CompanionSprite facing="right" state="idle" size={SPRITE_SIZE} />
-            </span>
             <div className="min-w-0">
               <div className="text-[10px] tracking-[0.3em] uppercase text-white/40">Ask</div>
               <div className="font-display italic text-xl md:text-2xl text-white/90 leading-tight truncate">
                 {project.name}.
               </div>
             </div>
+            {/* the sprite reads first and tabs last: order-[-1] keeps it to the left of the
+                heading, while the dom puts what the panel is for ahead of a toy that only
+                plays an animation.
+                its view box is wider and taller than SPRITE_SIZE so the staff halo, the hat
+                star and the vignette props are never cropped, so the slot below is pinned to
+                SPRITE_SIZE — that is what the header row lays out and what the focus ring
+                draws around — and the svg hangs outside it at spriteSlotOffset, which lands
+                the character on exactly the pixels it occupied before. */}
+            {reduceMotion ? (
+              <span
+                aria-hidden="true"
+                className="relative order-[-1] block shrink-0"
+                style={{ width: SPRITE_SIZE, height: SPRITE_SIZE }}
+              >
+                <span className="absolute block" style={spriteSlotOffset(SPRITE_SIZE)}>
+                  <CompanionSprite facing="right" state="idle" size={SPRITE_SIZE} />
+                </span>
+              </span>
+            ) : (
+              /* pokeable: the art is the whole control, so the button carries no chrome
+                 beyond the hover lift and the focus ring */
+              <button
+                type="button"
+                onClick={playVignette}
+                title={POKE_LABEL}
+                aria-label={POKE_LABEL}
+                style={{ width: SPRITE_SIZE, height: SPRITE_SIZE }}
+                className="relative order-[-1] block shrink-0 cursor-pointer rounded-xl border-0 bg-transparent p-0 leading-none transition-transform duration-200 ease-out hover:scale-105 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/40"
+              >
+                <span className="absolute block" style={spriteSlotOffset(SPRITE_SIZE)}>
+                  <CompanionSprite
+                    facing="right"
+                    state="idle"
+                    size={SPRITE_SIZE}
+                    vignette={vignette}
+                  />
+                </span>
+              </button>
+            )}
             {hasMessages && (
               <NewChatButton
                 onClick={() => surfaceRef.current?.reset()}

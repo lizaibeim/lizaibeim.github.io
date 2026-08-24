@@ -42,18 +42,6 @@ const DEFAULT_INTRO =
 const SITE_SCOPE = '__site__';
 const transcripts = new Map<string, SurfaceMessage[]>();
 
-// replies render as raw text, so any markdown the model slips in would show up as
-// literal punctuation; strip the light formatting it actually reaches for
-const stripMarkdown = (text: string): string =>
-  text
-    .replace(/^#{1,6}\s+/gm, '')
-    .replace(/^\s*[-*+]\s+/gm, '')
-    .replace(/^\s*\d+\.\s+/gm, '')
-    .replace(/\*\*([^*]+)\*\*/g, '$1')
-    .replace(/(^|\s)\*([^*\n]+)\*/g, '$1$2')
-    .replace(/`([^`\n]+)`/g, '$1')
-    .replace(/\n{3,}/g, '\n\n');
-
 // the site's link styling — the same underline the offline notice's mailto
 // carries, applied to every link found in an answer
 const LINK_CLASS =
@@ -145,6 +133,171 @@ export function linkify(text: string): React.ReactNode {
   if (nodes.length === 0) return text;
   if (cursor < text.length) nodes.push(text.slice(cursor));
   return nodes;
+}
+
+// ---------------------------------------------------------------------------
+// the permitted markdown subset
+//
+// the worker's persona used to ban markup outright and this file stripped
+// whatever slipped through, because the answering model was qwen-flash and could
+// not be trusted with a formatting rule. it is qwen-plus now, and the persona
+// grants a narrow subset instead: **bold** for the one load-bearing phrase in a
+// point, "- " and "1. " items when the answer genuinely enumerates, and a blank
+// line between blocks. this renderer turns exactly that subset into elements.
+//
+// two properties hold by construction. elements are built, never markup — like
+// linkify, nothing here goes near innerHTML or dangerouslySetInnerHTML, so no
+// string the model emits can become anything but text, a link, a <strong>, or a
+// list item. and anything outside the subset stays the literal characters the
+// model typed: an unterminated ** never matches, a stray hyphen never opens a
+// list, and neither can swallow the rest of the answer.
+// ---------------------------------------------------------------------------
+
+// restrained: the transcript is white/75, so bold is the same text at full
+// opacity and one weight up rather than a heavier slab
+const BOLD_CLASS = 'font-medium text-white';
+
+// markers dim enough not to fight the minimal aesthetic; the ordinal in a
+// numbered list is load-bearing, so it sits a little brighter than a bullet
+const UL_CLASS = 'list-disc space-y-1 pl-[1.15em] marker:text-white/25';
+const OL_CLASS = 'list-decimal space-y-1 pl-[1.35em] marker:text-white/40';
+const BLOCK_GAP = 'mt-3';
+
+// "- item": an ASCII hyphen at the start of a line with real content after it.
+// a hyphen mid-sentence, a bare "-", "-5 °C", "--", and an em-dash opening a
+// clause all fail this and stay text.
+const BULLET_LINE = /^[ \t]{0,3}-[ \t]+(\S.*)$/;
+
+// "1. item" or "2) item". three digits at most, so a year opening a sentence
+// ("2026. That was when…") cannot turn a paragraph into a list.
+const ORDERED_LINE = /^[ \t]{0,3}(\d{1,3})[.)][ \t]+(\S.*)$/;
+
+// **bold**, within one line. the lookahead rejects "** " so a lone pair of
+// asterisks in prose is not an opener, and the lazy body takes the nearest
+// closing pair. an unterminated ** simply never matches.
+const BOLD_PATTERN = /\*\*(?=\S)([^\n]+?)\*\*/;
+
+type RichBlock =
+  | { kind: 'p'; lines: string[] }
+  | { kind: 'ul'; items: string[] }
+  | { kind: 'ol'; items: string[]; start: number };
+
+// group the answer into paragraphs and list runs. a blank line always closes
+// the current block; consecutive item lines of the same type join one list.
+function parseBlocks(text: string): RichBlock[] {
+  const blocks: RichBlock[] = [];
+  // false only immediately after a blank line, which is what stops the next
+  // line from continuing the block before it
+  let continuing = false;
+
+  for (const line of text.split('\n')) {
+    if (!line.trim()) {
+      continuing = false;
+      continue;
+    }
+
+    const previous = continuing ? blocks[blocks.length - 1] : undefined;
+
+    const bullet = BULLET_LINE.exec(line);
+    if (bullet) {
+      if (previous && previous.kind === 'ul') previous.items.push(bullet[1]);
+      else blocks.push({ kind: 'ul', items: [bullet[1]] });
+      continuing = true;
+      continue;
+    }
+
+    const ordered = ORDERED_LINE.exec(line);
+    if (ordered) {
+      if (previous && previous.kind === 'ol') previous.items.push(ordered[2]);
+      else blocks.push({ kind: 'ol', items: [ordered[2]], start: Number(ordered[1]) });
+      continuing = true;
+      continue;
+    }
+
+    if (previous && previous.kind === 'p') previous.lines.push(line);
+    else blocks.push({ kind: 'p', lines: [line] });
+    continuing = true;
+  }
+
+  return blocks;
+}
+
+// one line (or one list item) of inline content: bold spans become <strong>,
+// and every remaining run — including the inside of a bold span — goes through
+// linkify, so a URL inside a bullet or inside bold is still a real anchor.
+function parseInline(text: string, keyPrefix: string): React.ReactNode {
+  // a fresh regex per call: a module-level /g pattern would carry lastIndex
+  // between calls and start dropping matches
+  const pattern = new RegExp(BOLD_PATTERN.source, 'g');
+  const nodes: React.ReactNode[] = [];
+  let cursor = 0;
+
+  for (let match = pattern.exec(text); match; match = pattern.exec(text)) {
+    if (match.index > cursor) {
+      nodes.push(
+        <React.Fragment key={`${keyPrefix}t${cursor}`}>
+          {linkify(text.slice(cursor, match.index))}
+        </React.Fragment>,
+      );
+    }
+    nodes.push(
+      <strong key={`${keyPrefix}b${match.index}`} className={BOLD_CLASS}>
+        {linkify(match[1])}
+      </strong>,
+    );
+    cursor = match.index + match[0].length;
+  }
+
+  if (nodes.length === 0) return linkify(text);
+  if (cursor < text.length) {
+    nodes.push(
+      <React.Fragment key={`${keyPrefix}t${cursor}`}>{linkify(text.slice(cursor))}</React.Fragment>,
+    );
+  }
+  return nodes;
+}
+
+// render an assistant turn. `trailing` — the streaming caret — is placed inside
+// the last block rather than after it, so it keeps sitting on the same line as
+// the text still being typed instead of dropping below a paragraph or a list.
+export function renderRich(text: string, trailing?: React.ReactNode): React.ReactNode {
+  const blocks = parseBlocks(text);
+  if (blocks.length === 0) return trailing ?? null;
+
+  return blocks.map((block, index) => {
+    const spacing = index > 0 ? BLOCK_GAP : undefined;
+    const tail = index === blocks.length - 1 ? trailing : null;
+
+    if (block.kind === 'p') {
+      return (
+        <p key={index} className={spacing}>
+          {parseInline(block.lines.join('\n'), `${index}-`)}
+          {tail}
+        </p>
+      );
+    }
+
+    const items = block.items.map((item, i) => (
+      <li key={i}>
+        {parseInline(item, `${index}-${i}-`)}
+        {i === block.items.length - 1 ? tail : null}
+      </li>
+    ));
+
+    return block.kind === 'ul' ? (
+      <ul key={index} className={`${spacing ? `${spacing} ` : ''}${UL_CLASS}`}>
+        {items}
+      </ul>
+    ) : (
+      <ol
+        key={index}
+        start={block.start === 1 ? undefined : block.start}
+        className={`${spacing ? `${spacing} ` : ''}${OL_CLASS}`}
+      >
+        {items}
+      </ol>
+    );
+  });
 }
 
 // a plus inside a speech bubble: the usual "start over" icon, drawn as strokes so
@@ -411,10 +564,10 @@ export const ChatSurface = forwardRef<ChatSurfaceHandle, ChatSurfaceProps>(funct
                   .
                 </>
               ) : (
-                <>
-                  {linkify(stripMarkdown(message.content))}
-                  {streaming && isLast && <span className="animate-pulse">▍</span>}
-                </>
+                renderRich(
+                  message.content,
+                  streaming && isLast ? <span className="animate-pulse">▍</span> : undefined,
+                )
               )}
             </div>
           );

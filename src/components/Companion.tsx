@@ -5,6 +5,7 @@ import {
   VIGNETTE_FIRST,
   VIGNETTE_IDS,
   VIGNETTE_MS,
+  spriteSlotOffset,
   type SpriteFacing,
   type SpriteState,
   type VignetteId,
@@ -45,20 +46,23 @@ const CATCH_RADIUS = 110;
 // grazing past does not relaunch it into motion out from under the click
 const RESUME_DELAY = 450;
 
-// idle easter eggs: how long the scene has to stay genuinely still before the first one
-const VIGNETTE_FIRST_AFTER = 20000;
+// idle easter eggs: a short beat of stillness is all the first one waits for, so a
+// visitor who pauses to read gets the payoff instead of missing it
+const VIGNETTE_FIRST_AFTER = 6000;
 // and how long a settled scene has to stay still before each later one
 const VIGNETTE_CALM = 3000;
-// the gap between vignettes, jittered so the cadence never reads as a metronome
-const VIGNETTE_GAP_MIN = 45000;
-const VIGNETTE_GAP_MAX = 90000;
+// the gap between vignettes, jittered so the cadence never reads as a metronome. a
+// half-minute floor keeps a long idle stretch down to a handful of moments rather than
+// the near-constant motion a 20s gap produced; the first one still arrives fast.
+const VIGNETTE_GAP_MIN = 30000;
+const VIGNETTE_GAP_MAX = 60000;
 // how often eligibility is re-checked; the walk loop cancels on its own frame
 const VIGNETTE_TICK = 250;
 // the character comes to rest just inside CATCH_RADIUS by design, so that radius cannot be
 // the keep-out: gate on its own 64px box instead, which only a deliberate approach enters
 const VIGNETTE_KEEP_OUT = HALF + 8;
-// and the cursor itself has to have been still for a beat — a moving cursor is an audience
-// that is doing something else
+// and the scene itself has to have been still for a beat — a moving cursor, or a page
+// scrolling under a fixed-position character, is an audience that is doing something else
 const VIGNETTE_POINTER_STILL = 1200;
 
 const HINT_DWELL = 350;
@@ -130,6 +134,10 @@ export const Companion: React.FC<CompanionProps> = ({ onOpenChat, hidden }) => {
 
   // hovering the character itself always wins: it is the click affordance
   const bubbleText = hidden ? null : hovered ? HOVER_TEXT : hint ?? (idlePrompt ? IDLE_PROMPT_TEXT : null);
+  // the idle prompt only reaches the screen when neither of the other two is in the
+  // bubble, so this is exactly "the character is nudging an audience that is doing
+  // nothing" — the one bubble a vignette is allowed to interrupt
+  const promptBubble = bubbleText === IDLE_PROMPT_TEXT;
 
   // everything the rAF loop reads lives in refs — the loop never touches react state
   const posRef = useRef({ x: 0, y: 0 });
@@ -152,7 +160,10 @@ export const Companion: React.FC<CompanionProps> = ({ onOpenChat, hidden }) => {
   // vignette scheduling: every timer lives in a ref so the rAF loop can cancel on its frame
   const vignetteRef = useRef<VignetteId | null>(null);
   const vignetteTimerRef = useRef<number | null>(null);
-  const bubbleRef = useRef(false);
+  // only the hover bubble and a data-companion-hint bubble block a vignette: those mean
+  // the visitor is doing something. the idle prompt is tracked separately below.
+  const blockingBubbleRef = useRef(false);
+  const idlePromptRef = useRef(false);
   const bagRef = useRef<VignetteId[]>([]);
   const lastVignetteRef = useRef<VignetteId | null>(null);
   const playedVignetteRef = useRef(false);
@@ -161,6 +172,12 @@ export const Companion: React.FC<CompanionProps> = ({ onOpenChat, hidden }) => {
   const calmSinceRef = useRef(Date.now());
 
   const lastMoveRef = useRef(Date.now());
+  // a wheel/trackpad visitor scrolls without moving the mouse, so lastMoveRef alone reads
+  // that as stillness while the whole page slides under the character
+  const lastScrollRef = useRef(Date.now());
+  // the prompt's own quiet spell, kept out of lastMoveRef so showing a prompt no longer
+  // reads as cursor movement to the vignette scheduler
+  const idlePromptAtRef = useRef(-Infinity);
   const idleShownRef = useRef(0);
   const idleHideRef = useRef<number | null>(null);
   const dwellRef = useRef<number | null>(null);
@@ -272,6 +289,22 @@ export const Companion: React.FC<CompanionProps> = ({ onOpenChat, hidden }) => {
     calmSinceRef.current = Date.now();
   }, []);
 
+  // a vignette outranks the idle prompt, so retract the prompt before one starts and the
+  // two can never share the screen. talkingRef is dropped here rather than a frame later
+  // by the bubble effect, because the walk loop would read the stale pose and cancel the
+  // vignette it just started.
+  // idlePromptRef is derived from a render, so it still reads false for a prompt that was
+  // set this tick and has not committed yet: the hide timer is the synchronous half of the
+  // same fact, and either one being live means there is a prompt to retract.
+  const dropIdlePrompt = useCallback(() => {
+    if (idleHideRef.current === null && !idlePromptRef.current) return;
+    idlePromptRef.current = false;
+    talkingRef.current = false;
+    if (idleHideRef.current !== null) window.clearTimeout(idleHideRef.current);
+    idleHideRef.current = null;
+    setIdlePrompt(false);
+  }, []);
+
   // hand the pointer back once the cursor has left the button it was let through
   const releasePassThrough = useCallback((x: number, y: number) => {
     if (!passThroughRef.current) return;
@@ -332,13 +365,16 @@ export const Companion: React.FC<CompanionProps> = ({ onOpenChat, hidden }) => {
   // parked modes have no walk loop, so drive the sprite straight off the bubble
   useEffect(() => {
     talkingRef.current = bubbleText !== null;
-    bubbleRef.current = bubbleText !== null;
-    // a bubble is the character addressing the visitor: an easter egg must not talk over it
-    if (bubbleText !== null) cancelVignette();
+    idlePromptRef.current = promptBubble;
+    blockingBubbleRef.current = bubbleText !== null && !promptBubble;
+    // a hover or hint bubble is the visitor doing something: an easter egg must not talk
+    // over it, and the scene is no longer calm. the idle prompt is the character talking
+    // to itself, so it neither cancels a vignette nor restarts the calm window.
+    if (blockingBubbleRef.current) cancelVignette();
     if (parked) {
       applyState(bubbleText !== null ? 'talking' : 'idle');
     }
-  }, [bubbleText, parked, applyState, cancelVignette]);
+  }, [bubbleText, promptBubble, parked, applyState, cancelVignette]);
 
   // pointer tracking: needed for the idle prompt even when the walk loop is off,
   // but pointless on a device that has no hover at all
@@ -486,9 +522,15 @@ export const Companion: React.FC<CompanionProps> = ({ onOpenChat, hidden }) => {
 
     const eligible = () => {
       if (hiddenRef.current || document.hidden) return false;
-      if (hoveredRef.current || bubbleRef.current || hintElRef.current) return false;
-      if (stateRef.current !== 'idle') return false;
-      if (Date.now() - lastMoveRef.current < VIGNETTE_POINTER_STILL) return false;
+      // the hover bubble and a hint bubble mean the visitor is busy; the idle prompt does
+      // not, so it is deliberately absent from this test
+      if (hoveredRef.current || blockingBubbleRef.current || hintElRef.current) return false;
+      // ...and so is the 'talking' pose that same prompt puts the sprite in. a walk is
+      // still a real disqualifier, and so is talking for any other reason.
+      if (stateRef.current === 'walking') return false;
+      if (stateRef.current === 'talking' && !idlePromptRef.current) return false;
+      // stillness is deliberately not tested here: see settled() below, which the tick
+      // waits on instead of treating it as a disturbance
       const pointer = pointerRef.current;
       const pos = posRef.current;
       // a cursor sitting on the character is a visitor about to click, not an audience
@@ -497,6 +539,12 @@ export const Companion: React.FC<CompanionProps> = ({ onOpenChat, hidden }) => {
       }
       return true;
     };
+
+    // the cursor and the page both have to have come to rest. this is the one disqualifier
+    // that is only ever "not yet": it says nothing was disturbed, just that the quiet is a
+    // moment old, so the tick waits it out instead of restarting the calm window on it.
+    const settled = () =>
+      Date.now() - Math.max(lastMoveRef.current, lastScrollRef.current) >= VIGNETTE_POINTER_STILL;
 
     const pick = (): VignetteId => {
       // the flagship always opens a session; afterwards it re-enters the shuffle bag
@@ -525,6 +573,13 @@ export const Companion: React.FC<CompanionProps> = ({ onOpenChat, hidden }) => {
         cancelVignette();
         return;
       }
+      // not a disturbance, only a wait: returning here leaves calmSinceRef alone, so the
+      // stillness window runs alongside the calm window instead of pushing it back
+      if (!settled()) return;
+      // the idle prompt is worth more than an easter egg — there are only two a session —
+      // so a vignette queues behind its 5s rather than cutting it short. the hide timer is
+      // checked too, because a prompt set this tick has not reached idlePromptRef yet.
+      if (idleHideRef.current !== null || idlePromptRef.current) return;
       if (vignetteRef.current !== null) return;
 
       const calm = playedVignetteRef.current ? VIGNETTE_CALM : VIGNETTE_FIRST_AFTER;
@@ -532,6 +587,12 @@ export const Companion: React.FC<CompanionProps> = ({ onOpenChat, hidden }) => {
       if (now < vignetteNextAtRef.current) return;
 
       const id = pick();
+      // the deferral above already means no prompt is up or pending; this is the guarantee
+      // that the two can never share the screen. put the sprite back in its idle pose in
+      // the same breath so the walk loop does not read a stale 'talking' pose next frame
+      // and cancel what just started.
+      dropIdlePrompt();
+      applyState('idle');
       vignetteRef.current = id;
       setVignette(id);
       // every vignette animation is `1 both` and ends on the base pose, so by the time
@@ -545,6 +606,17 @@ export const Companion: React.FC<CompanionProps> = ({ onOpenChat, hidden }) => {
       }, VIGNETTE_MS[id] + 80);
     }, VIGNETTE_TICK);
 
+    // a page moving under a fixed-position character is motion the character should not
+    // talk over, and a wheel or trackpad scroll never touches the mouse: without these the
+    // stillness test passes on a stale lastMoveRef mid-scroll
+    const onScrollActivity = () => {
+      lastScrollRef.current = Date.now();
+    };
+    window.addEventListener('wheel', onScrollActivity, { passive: true });
+    // the site scrolls an inner container (#main-scroll-container) and scroll events do not
+    // bubble, so only the capture phase sees them from up here
+    window.addEventListener('scroll', onScrollActivity, { capture: true, passive: true });
+
     // a backgrounded tab must not play to nobody, and must not bank the quiet time either
     const onVisibility = () => {
       if (document.hidden) {
@@ -557,10 +629,12 @@ export const Companion: React.FC<CompanionProps> = ({ onOpenChat, hidden }) => {
 
     return () => {
       window.clearInterval(tick);
+      window.removeEventListener('wheel', onScrollActivity);
+      window.removeEventListener('scroll', onScrollActivity, { capture: true });
       document.removeEventListener('visibilitychange', onVisibility);
       cancelVignette();
     };
-  }, [parked, hidden, env.hoverNone, cancelVignette]);
+  }, [parked, hidden, env.hoverNone, cancelVignette, dropIdlePrompt, applyState]);
 
   // hover hints from anywhere on the page
   useEffect(() => {
@@ -624,11 +698,25 @@ export const Companion: React.FC<CompanionProps> = ({ onOpenChat, hidden }) => {
       if (hiddenRef.current || idleShownRef.current >= MAX_IDLE_PROMPTS) return;
       // the hover bubble outranks the prompt, so firing now would spend it unseen
       if (hoveredRef.current || hintElRef.current || idleHideRef.current !== null) return;
-      if (Date.now() - lastMoveRef.current < IDLE_PROMPT_AFTER) return;
+      // the vignette owns the sprite while it plays, and it is the better nudge: wait
+      // rather than pop a bubble over the animation
+      if (vignetteRef.current !== null) return;
+      // the prompt is its own kind of activity, so the next one needs a fresh quiet
+      // spell — but that bookkeeping stays out of lastMoveRef, which the vignette
+      // scheduler reads as "the cursor moved"
+      // scrolling counts as activity too: a wheel reader never moves the cursor, and
+      // being nudged mid-scroll is the same mistake the vignette scheduler used to make
+      const lastActivity = Math.max(
+        lastMoveRef.current,
+        lastScrollRef.current,
+        idlePromptAtRef.current,
+      );
+      if (Date.now() - lastActivity < IDLE_PROMPT_AFTER) {
+        return;
+      }
 
       idleShownRef.current += 1;
-      // treat the prompt as activity so the next one needs a fresh quiet spell
-      lastMoveRef.current = Date.now();
+      idlePromptAtRef.current = Date.now();
       setIdlePrompt(true);
       idleHideRef.current = window.setTimeout(() => {
         idleHideRef.current = null;
@@ -780,12 +868,18 @@ export const Companion: React.FC<CompanionProps> = ({ onOpenChat, hidden }) => {
         className="pointer-events-none absolute inset-0 block transition-transform duration-200 ease-out"
         style={{ transform: hovered ? 'scale(1.08)' : 'scale(1)' }}
       >
-        <CompanionSprite
-          facing={facing}
-          state={spriteState}
-          size={SPRITE_SIZE}
-          vignette={vignette}
-        />
+        {/* the sprite's view box carries margin for the staff halo, the hat star and the
+            vignette props, so the svg is larger than SPRITE_SIZE and hangs outside this
+            span. the offset puts the character back on the span's centre, which is the
+            tracked position every distance test in this file is written against. */}
+        <span className="absolute block" style={spriteSlotOffset(SPRITE_SIZE)}>
+          <CompanionSprite
+            facing={facing}
+            state={spriteState}
+            size={SPRITE_SIZE}
+            vignette={vignette}
+          />
+        </span>
       </span>
 
       <button
