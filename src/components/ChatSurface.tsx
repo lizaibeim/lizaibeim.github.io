@@ -177,6 +177,16 @@ const ORDERED_LINE = /^[ \t]{0,3}(\d{1,3})[.)][ \t]+(\S.*)$/;
 // closing pair. an unterminated ** simply never matches.
 const BOLD_PATTERN = /\*\*(?=\S)([^\n]+?)\*\*/;
 
+// the persona forbids single-asterisk emphasis, but the model reaches for it
+// anyway and the raw "*like this*" then shows on the page. strip the markers and
+// keep the words: an italic here would fight the display face the site already
+// uses. the pair has to open on a word boundary and close on one, so a lone
+// asterisk or a multiplication sign survives as itself, and "**bold**" cannot
+// match because the character after the opening "*" is another "*".
+const STRAY_EMPHASIS = /(^|[\s(])\*(?=[^\s*])([^*\n]+?)\*(?=$|[\s.,;:!?)\]}»”"'])/g;
+
+const stripStrayEmphasis = (text: string) => text.replace(STRAY_EMPHASIS, '$1$2');
+
 type RichBlock =
   | { kind: 'p'; lines: string[] }
   | { kind: 'ul'; items: string[] }
@@ -236,7 +246,7 @@ function parseInline(text: string, keyPrefix: string): React.ReactNode {
     if (match.index > cursor) {
       nodes.push(
         <React.Fragment key={`${keyPrefix}t${cursor}`}>
-          {linkify(text.slice(cursor, match.index))}
+          {linkify(stripStrayEmphasis(text.slice(cursor, match.index)))}
         </React.Fragment>,
       );
     }
@@ -248,20 +258,53 @@ function parseInline(text: string, keyPrefix: string): React.ReactNode {
     cursor = match.index + match[0].length;
   }
 
-  if (nodes.length === 0) return linkify(text);
+  if (nodes.length === 0) return linkify(stripStrayEmphasis(text));
   if (cursor < text.length) {
     nodes.push(
-      <React.Fragment key={`${keyPrefix}t${cursor}`}>{linkify(text.slice(cursor))}</React.Fragment>,
+      <React.Fragment key={`${keyPrefix}t${cursor}`}>
+        {linkify(stripStrayEmphasis(text.slice(cursor)))}
+      </React.Fragment>,
     );
   }
   return nodes;
 }
 
+// the persona bans closing gestures, but the model keeps bolting a contact line
+// onto answers that were already finished — measured at two replies in three.
+// prompt wording could not get it to zero, so the last line is checked here.
+//
+// the test is deliberately narrow: a FORMULAIC opener ("for more information",
+// "如需…") AND a contact target in the same sentence AND real content before it.
+// a direct answer like "you can reach him at zali@di.ku.dk" opens with none of
+// those phrases and survives, which matters because that sentence IS the answer
+// when someone asks how to get in touch.
+const SIGN_OFF_OPENER =
+  /^(?:for\s+(?:more|further|additional|implementation|technical|specific|detailed)\b|for\s+(?:details|inquiries|enquiries|questions|collaboration)\b|to\s+(?:learn|read|find\s+out)\s+more\b|if\s+you(?:'d|\s+would)?\s+(?:like|want|need|are\s+interested)\b|feel\s+free\s+to\b|should\s+you\b|don't\s+hesitate\b|you\s+can\s+(?:explore|read|find\s+out)\s+more\b|如需|想了解更多|更多信息|欢迎(?:联系|随时)|如果(?:你|您)(?:想|需要))/i;
+
+const CONTACT_TARGET = /zali@di\.ku\.dk|linkedin\.com|lizaibeim\.github\.io|ucph-cola\.org/i;
+
+// split on sentence enders, keeping them, so a dropped tail leaves clean prose
+const SENTENCE_SPLIT = /(?<=[.!?。！？])\s+/;
+
+const dropTrailingSignOff = (text: string): string => {
+  const trimmed = text.trimEnd();
+  const parts = trimmed.split(SENTENCE_SPLIT);
+  if (parts.length < 2) return text;
+
+  const last = parts[parts.length - 1].trim();
+  if (!SIGN_OFF_OPENER.test(last) || !CONTACT_TARGET.test(last)) return text;
+
+  const kept = parts.slice(0, -1).join(' ').trimEnd();
+  // never strip the answer down to a stub: if little is left, the contact line
+  // was carrying the reply rather than trailing it
+  return kept.length >= 60 ? kept : text;
+};
+
 // render an assistant turn. `trailing` — the streaming caret — is placed inside
 // the last block rather than after it, so it keeps sitting on the same line as
 // the text still being typed instead of dropping below a paragraph or a list.
 export function renderRich(text: string, trailing?: React.ReactNode): React.ReactNode {
-  const blocks = parseBlocks(text);
+  const blocks = parseBlocks(dropTrailingSignOff(text));
   if (blocks.length === 0) return trailing ?? null;
 
   return blocks.map((block, index) => {
