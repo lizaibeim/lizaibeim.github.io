@@ -320,7 +320,7 @@ function parseInline(text: string, keyPrefix: string): React.ReactNode {
 // those phrases and survives, which matters because that sentence IS the answer
 // when someone asks how to get in touch.
 const SIGN_OFF_OPENER =
-  /^(?:for\s+(?:more|further|additional|implementation|technical|specific|detailed)\b|for\s+(?:details|inquiries|enquiries|questions|collaboration)\b|to\s+(?:learn|read|find\s+out)\s+more\b|if\s+you(?:'d|\s+would)?\s+(?:like|want|need|are\s+interested)\b|feel\s+free\s+to\b|should\s+you\b|don't\s+hesitate\b|you\s+can\s+(?:explore|read|find\s+out)\s+more\b|如需|想了解更多|更多信息|欢迎(?:联系|随时)|如果(?:你|您)(?:想|需要))/i;
+  /^(?:for\s+(?:more|further|additional|implementation|technical|specific|detailed)\b|for\s+(?:details|inquiries|enquiries|questions|collaboration)\b|to\s+(?:learn|read|find\s+out)\s+more\b|if\s+you(?:'d|\s+would)?\s+(?:like|want|need|are\s+interested)\b|feel\s+free\s+to\b|should\s+you\b|don't\s+hesitate\b|you\s+can\s+(?:explore|read|find\s+out)\s+more\b|that(?:'s|\s+is)?\s+not\s+something\s+i\s+have\b|for\s+details\s+beyond\b|如需|想了解更多|更多信息|欢迎(?:联系|随时)|如果(?:你|您)(?:想|需要)|这(?:不是|并不是)我|我这里没有)/i;
 
 const CONTACT_TARGET = /zali@di\.ku\.dk|linkedin\.com|lizaibeim\.github\.io|ucph-cola\.org/i;
 
@@ -337,7 +337,8 @@ const dropTrailingSignOff = (text: string): string => {
 
   const kept = parts.slice(0, -1).join(' ').trimEnd();
   // never strip the answer down to a stub: if little is left, the contact line
-  // was carrying the reply rather than trailing it
+  // was carrying the reply rather than trailing it — which is also what keeps a
+  // genuine one-sentence "I don't have that" intact, since it never reaches here
   return kept.length >= 60 ? kept : text;
 };
 
