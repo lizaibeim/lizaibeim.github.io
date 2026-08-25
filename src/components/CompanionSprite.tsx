@@ -620,26 +620,28 @@ const cssGlasses = (uid: string) => {
   });
 
   // the hat stays: a live <use> of the real hat art, hanging outside actRoot.
-  // it sags down-right and tips over, as if the head it was resting on had been removed,
-  // then slides back square when he rematerialises under it. the sag reads better than a
-  // hover: gravity is the joke, and the strip above the hat now belongs to nothing.
+  // the head goes out from under it, so it lifts, hangs and tilts over nothing — and the
+  // whole point of the beat is the landing: when he rematerialises it drops onto him with
+  // an impact ease, overshooting past its resting place before it settles. the float is
+  // what buys that fall its height, so do not flatten it into a sag.
   r.push(run(s('gHat'), k('Hat'), T, 'ease-in-out'));
   r.push(
     kf(k('Hat'), T, [
-      [0, 'opacity:0;transform:translate(0px,0px) rotate(0deg)'],
-      [2199, 'opacity:0;transform:translate(0px,0px) rotate(0deg)'],
-      [2200, 'opacity:1;transform:translate(0px,0px) rotate(0deg)'],
-      [2520, 'opacity:1;transform:translate(2px,3px) rotate(4deg)'],
-      [2745, 'opacity:1;transform:translate(4px,5.5px) rotate(9deg)'],
-      [2970, 'opacity:1;transform:translate(5px,4px) rotate(6deg)'],
-      [3195, 'opacity:1;transform:translate(4px,6.5px) rotate(10deg)'],
-      [3400, 'opacity:1;transform:translate(5px,5px) rotate(7deg)'],
+      [0, 'opacity:0;transform:translateY(0px) rotate(0deg)'],
+      [2199, 'opacity:0;transform:translateY(0px) rotate(0deg)'],
+      [2200, 'opacity:1;transform:translateY(0px) rotate(0deg)'],
+      [2520, 'opacity:1;transform:translateY(-11px) rotate(0deg)'],
+      [2745, 'opacity:1;transform:translateY(-14px) rotate(6deg)'],
+      [2970, 'opacity:1;transform:translateY(-12px) rotate(0deg)'],
+      [3195, 'opacity:1;transform:translateY(-10px) rotate(-6deg)'],
+      [3400, 'opacity:1;transform:translateY(-12px) rotate(0deg)'],
       // the seam pulls it down a little, and then it hangs there over a bare head
-      [3700, 'opacity:1;transform:translate(5px,6.5px) rotate(9deg)'],
-      [4180, `opacity:1;transform:translate(5px,6.5px) rotate(9deg);animation-timing-function:${IMPACT}`],
-      [4270, 'opacity:1;transform:translate(-1px,1px) rotate(-2deg)'],
-      [4309, 'opacity:1;transform:translate(0px,0px) rotate(0deg)'],
-      [4310, 'opacity:0;transform:translate(0px,0px) rotate(0deg)'],
+      [3700, 'opacity:1;transform:translateY(-9px) rotate(0deg)'],
+      [4180, `opacity:1;transform:translateY(-9px) rotate(0deg);animation-timing-function:${IMPACT}`],
+      // the drop: past the resting line, then back up onto his head
+      [4270, 'opacity:1;transform:translateY(3.5px) rotate(0deg)'],
+      [4309, 'opacity:1;transform:translateY(0px) rotate(0deg)'],
+      [4310, 'opacity:0;transform:translateY(0px) rotate(0deg)'],
       [T, 'opacity:0'],
     ]),
   );
