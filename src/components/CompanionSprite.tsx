@@ -646,16 +646,20 @@ const cssGlasses = (uid: string) => {
       [0, 'opacity:0;transform:translateY(0px) rotate(0deg)'],
       [2199, 'opacity:0;transform:translateY(0px) rotate(0deg)'],
       [2200, 'opacity:1;transform:translateY(0px) rotate(0deg)'],
-      [2520, 'opacity:1;transform:translateY(-11px) rotate(0deg)'],
-      [2745, 'opacity:1;transform:translateY(-14px) rotate(6deg)'],
-      [2970, 'opacity:1;transform:translateY(-12px) rotate(0deg)'],
-      [3195, 'opacity:1;transform:translateY(-10px) rotate(-6deg)'],
-      [3400, 'opacity:1;transform:translateY(-12px) rotate(0deg)'],
-      // the seam pulls it down a little, and then it hangs there over a bare head
-      [3700, 'opacity:1;transform:translateY(-9px) rotate(0deg)'],
-      [4180, `opacity:1;transform:translateY(-9px) rotate(0deg);animation-timing-function:${IMPACT}`],
-      // the drop: past the resting line, then back up onto his head
-      [4270, 'opacity:1;transform:translateY(3.5px) rotate(0deg)'],
+      [2520, 'opacity:1;transform:translateY(-12px) rotate(0deg)'],
+      [2745, 'opacity:1;transform:translateY(-15px) rotate(6deg)'],
+      [2970, 'opacity:1;transform:translateY(-13px) rotate(0deg)'],
+      [3195, 'opacity:1;transform:translateY(-11px) rotate(-6deg)'],
+      [3400, 'opacity:1;transform:translateY(-13px) rotate(0deg)'],
+      // untethered now, so it drifts up rather than settling — this is the height the
+      // fall is bought with, and it is the whole reason the beat reads
+      [3700, 'opacity:1;transform:translateY(-14px) rotate(0deg)'],
+      // he is back under it by 3980 (see the Root keyframes) — one beat of a bare head,
+      // then it falls. the fall runs 250ms rather than the 90 it used to: 90ms of 9px on
+      // an 88px sprite is a cut, not a drop, which is why nobody ever saw this happen.
+      [3980, `opacity:1;transform:translateY(-14px) rotate(0deg);animation-timing-function:${IMPACT}`],
+      [4230, 'opacity:1;transform:translateY(4px) rotate(0deg)'],
+      [4285, 'opacity:1;transform:translateY(-1.5px) rotate(0deg)'],
       [4309, 'opacity:1;transform:translateY(0px) rotate(0deg)'],
       [4310, 'opacity:0;transform:translateY(0px) rotate(0deg)'],
       [T, 'opacity:0'],
