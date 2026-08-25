@@ -87,6 +87,14 @@ export const PROJECTS: Project[] = [
         href: "https://doi.org/10.1145/3706468.3706525",
         note: "Best Short Paper Award",
       },
+      {
+        title:
+          "Designing for Transparency: Gaze-Augmented Collaborative Action Recognition with Vision-Language Models",
+        authors: "Z. Li, V. Holm-Janas, S. Yamaguchi, D. Spikol",
+        venue: "ICALT 2026",
+        year: 2026,
+        note: "Accepted — DOI pending",
+      },
     ],
     suggestions: [
       "What can the OpenMMLA toolkit collect?",
