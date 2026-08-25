@@ -178,13 +178,16 @@ Everything above is both the facts and the register you write in: plain, positiv
 // a page whose id is missing here fails validation with a 400.
 const PROJECT_KNOWLEDGE = {
   cola: `CoLA — titled "Collaborative Learning Agent" on the site and "Collaborative Learning Assistant" in its header — is a wearable multimodal AI platform for egocentric sensing, real-time behavioral analysis, and interactive facilitation in collaborative learning settings. Zaibei built it during his visiting-researcher stay at Hiroshima City University (November 2025 – January 2026), prototyping the sensing setup — mobile devices, embedded sensors, smart glasses — and pairing it with an interactive AI facilitator. Project site: ucph-cola.org — login-gated, version 2.0.0, with five sections: Live (streams, transcripts, sensors), Sessions (review, score, export), Devices (assign glasses to learners), Config (experiments and tasks) and Admin (users and roles).
-Devices: the wearable is Project Aria smart glasses, which is how Meta Project Aria enters the picture — a research collaboration with Meta Project Aria was established around this work, and the glasses come through a Meta Project Aria Research Partnership / Hardware Grant (2026). A learner claims a pair — one at a time — picks an experiment and presses Connect, after which the glasses stream under their name and the teacher starts the session; a classroom Mac runs an Aria console for starting and stopping streams. It all runs in the browser, with no app to install; the page stays open on the phone Bluetooth-paired with the glasses, because that is where the assistant's spoken response comes out. New pairs are provisioned over USB from a site Mac, and wearer bindings hot-swap while the stream keeps running.
-Pipeline, in the Config page's levels: level 1 capture (raw storage, segment length, writer workers); level 2 processing — ASR with voice activity detection, a speaker verifier with selectable speaker-recognition models, a motion and pose detector reading accelerometer data to tell sitting from standing, and an EgoNarrator vision component sampling frames at a configurable width with an optional face blur; level 3 evaluation — a CPS evaluator (human-human collaboration) and an HAI evaluator (human-AI collaboration), each with its own model, interval and window, plus a summariser and RAG embedding over uploaded documents for teacher chat. An interaction layer runs an Omni realtime voice model for the spoken facilitator. The Live view shows hands, gaze, latency, audio, motion and pose alongside narrator and dialogue panels and the CPS and HAI-C scores with their evidence; sessions can be filtered, exported and deleted, with a consent-withdrawal workflow.
+Devices: the wearable is Project Aria smart glasses, which is how Meta Project Aria enters the picture — a research collaboration with Meta Project Aria was established around this work, and the glasses come through a Meta Project Aria Research Partnership / Hardware Grant (2026). A learner claims a pair — one at a time — picks an experiment and presses Connect, after which the glasses stream under their name and the teacher starts the session; a classroom Mac runs an Aria console for starting and stopping streams. The teacher's side runs in the browser; the page stays open on the phone Bluetooth-paired with the glasses, because that is where the assistant's spoken response comes out. There is also an iOS app, with a collector, a dashboard mirroring the web one, and a login. The glasses can be captured from without it, but the phone's own sensors and the ESP32 boards are started and stopped from the app, and it is where an Aria device is bound to an experiment. New pairs are provisioned over USB from a site Mac, and wearer bindings hot-swap while the stream keeps running.
+What it does, at the level the site shows: it captures egocentric video, audio and motion alongside phone and embedded-sensor streams, transcribes and attributes speech, tracks posture and attention, and scores how a group is collaborating — surfacing that live to a teacher with the evidence behind each score, and keeping sessions for review, export and consent withdrawal. How those stages are decomposed, and what runs inside them, is the subject of the system paper and is not described here.
 Publication status: the CoLA system paper is still being written.
 HANDLING (instructions to you, never phrasing to copy): the paragraphs above are the facts and also the register — plain, positive, unhurried. What follows is instruction only. Do not quote it, do not imitate its shape, and do not let its negatives into your prose.
 (1) Publication status: the CoLA system paper is still being written and is NOT published. If asked whether the work has been published, say the paper is still in preparation and point to zali@di.ku.dk. Never name a venue, a submission status, or a date for it, and never offer a link or DOI.
 (2) You have nothing further on CoLA — no evaluation, no participants, no study sizes, no datasets, no outcomes. Never invent metrics, results, team members or funding, and never guess at them. Asked for any of those, give the persona's one-sentence-plus-email shape, pointing to zali@di.ku.dk, and do not account for the gap.
-(3) Keep the Meta Project Aria line at its true size: a hardware grant and a research partnership, one supporting detail among the others on this page, not employment, not a Meta product, not a joint publication and not an endorsement of CoLA. State it plainly if it is asked about or if it genuinely fits, never as a headline credential and never as the opening of an answer about what CoLA is or how it works.`,
+(3) Keep the Meta Project Aria line at its true size: a hardware grant and a research partnership, one supporting detail among the others on this page, not employment, not a Meta product, not a joint publication and not an endorsement of CoLA. State it plainly if it is asked about or if it genuinely fits, never as a headline credential and never as the opening of an answer about what CoLA is or how it works.
+(4) HOW COLA IS BUILT IS NOT PUBLIC YET, AND THE ANSWER HAS A FIXED SHAPE. Asked anything about its construction — however the question is framed, and whether it wants detail or just "the high level" — you have exactly two sentences. One: the system paper is in preparation. Two: zali@di.ku.dk. Then stop.
+Everything else is a leak, including the polite kinds. Do not say which aspects are undocumented. Do not give examples of what the paper would cover. Do not offer the functional flow as a consolation, and do not count its parts. A sentence that begins "no public documentation specifies..." or "not its internal layers, such as..." is describing the thing in the act of withholding it, and is worse than saying nothing because it reads as authoritative. Above all, never supply a technology that would plausibly sit in such a system: any model, tool or method you name here is invented, and it becomes a false claim about unpublished work of his.
+The paragraphs above are the ceiling. What CoLA is for, what it senses, what a teacher sees — those are on the site and you may say them. Nothing beneath that surface exists for you.`,
 
   openmmla: `OpenMMLA is an open-source Python toolkit and reference platform for multimodal data collection, synchronization and analytics in real-world collaborative environments, deployed locally for data privacy. Zaibei designed and developed it in his doctoral research at the University of Copenhagen (February 2024 – present), with Life Campus on a Novo Nordisk Foundation-funded project. Code: github.com/ucph-ccs/OpenMMLA, MIT licensed; PyPI packages openmmla-audio and openmmla-vision; runs on macOS, Ubuntu, Raspberry Pi and WSL.
 Architecture: a five-layer IoT stack — sensing, network (Ethernet, WiFi, MQTT, RESP), data processing, analytics, presentation — over a client-server split. The streams module buffers sensor frames at a rate following the base station's speed; a Base filters frames and detects markers, offloading heavy work to the services module's REST servers; a Synchronizer listens on MQTT and merges per-person results into group-level segments.
@@ -569,9 +572,20 @@ const BENIGN_REFUSAL_CHUNKS_ZH = [
 // assistant turn when the gate refuses, and therefore the exact text that comes
 // back in the next request's history. all of them have to be recognisable
 // there, or a single refusal poisons the rest of the conversation again.
+const UNPUBLISHED_REFUSAL_EN = [
+  "CoLA's system paper is still in preparation, so how it is built is not something I can go into yet. ",
+  'zali@di.ku.dk is the place to ask.',
+];
+const UNPUBLISHED_REFUSAL_ZH = [
+  'CoLA 的系统论文还在撰写中，它的实现细节我现在还不能讲。',
+  '可以直接联系 zali@di.ku.dk。',
+];
+
 const ALL_REFUSAL_CHUNK_SETS = [
   ATTACK_REFUSAL_CHUNKS_EN,
   ATTACK_REFUSAL_CHUNKS_ZH,
+  UNPUBLISHED_REFUSAL_EN,
+  UNPUBLISHED_REFUSAL_ZH,
   ...BENIGN_REFUSAL_CHUNKS_EN,
   ...BENIGN_REFUSAL_CHUNKS_ZH,
 ];
@@ -857,6 +871,30 @@ function sseChunk(id, created, model, delta, finishReason = null) {
 
 // the two things a refusal can be. the pre-filter sends ATTACK, the classifier
 // sends BENIGN; nothing else reaches layer 4.
+// layer 1b — CoLA's system paper is unpublished, so "how is it built" is answered
+// by fixed copy rather than by a model. three prompt rewrites failed to stop the
+// answering model describing the architecture while declining to describe it: it
+// would name generic pipeline stages, or plausible models, and both read as
+// authoritative about work that is not out yet. a regex cannot enumerate, so the
+// leak is closed by construction. it only ever fires on the cola scope.
+const COLA_BUILD_PATTERNS = [
+  /\b(re[-\s]?implement|reimplement|rebuild|recreate|replicate|clone|port)\b/i,
+  /\b(architecture|archi|tech stack|technical stack|system design|pipeline|internals?)\b/i,
+  /\b(which|what|whose)\s+(base\s+)?(model|models|llm|vlm|framework|library|libraries|toolkit|algorithm)s?\b/i,
+  /\b(how)\s+(is|was|does|did)\s+(it|cola|this|the system)\s+(built|build|made|implemented|architected|work|works|structured)\b/i,
+  /\b(processing\s+)?level\s*[123]\b/i,
+  /\b(source code|codebase|repo|repository|api spec|schema|config schema)\b/i,
+  // no \b here: word boundaries are defined on [A-Za-z0-9_], so a CJK term can never
+  // sit next to one and \b技术细节\b matches nothing at all
+  /(技术细节|架构|复现|重新实现|实现细节|技术栈|源码|代码库|怎么(实现|搭|做)的|用的什么模型|底层模型)/,
+];
+
+function isColaBuildQuestion(text, scope) {
+  if (scope !== 'cola' || !text) return false;
+  return COLA_BUILD_PATTERNS.some((pattern) => pattern.test(text));
+}
+
+const REFUSAL_TIER_UNPUBLISHED = 'unpublished';
 const REFUSAL_TIER_ATTACK = 'attack';
 const REFUSAL_TIER_BENIGN = 'benign';
 
@@ -927,6 +965,10 @@ function refusalChunks(text, tier) {
 
   if (tier === REFUSAL_TIER_ATTACK) {
     return zh ? ATTACK_REFUSAL_CHUNKS_ZH : ATTACK_REFUSAL_CHUNKS_EN;
+  }
+
+  if (tier === REFUSAL_TIER_UNPUBLISHED) {
+    return zh ? UNPUBLISHED_REFUSAL_ZH : UNPUBLISHED_REFUSAL_EN;
   }
 
   const pool = zh ? BENIGN_REFUSAL_CHUNKS_ZH : BENIGN_REFUSAL_CHUNKS_EN;
@@ -1053,6 +1095,12 @@ export default {
     if (isBlatantOverride(latestText)) {
       console.log('scope refusal: pre-filter');
       return refusalResponse(latestText, env, cors, REFUSAL_TIER_ATTACK);
+    }
+
+    // layer 1b — construction questions about CoLA, answered by fixed copy
+    if (isColaBuildQuestion(latestText, scoped.scope)) {
+      console.log('scope refusal: cola-build pre-filter');
+      return refusalResponse(latestText, env, cors, REFUSAL_TIER_UNPUBLISHED);
     }
 
     // layer 2 — the real gate. a refusal here also costs no answering call.

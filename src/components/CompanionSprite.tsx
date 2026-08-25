@@ -646,20 +646,19 @@ const cssGlasses = (uid: string) => {
       [0, 'opacity:0;transform:translateY(0px) rotate(0deg)'],
       [2199, 'opacity:0;transform:translateY(0px) rotate(0deg)'],
       [2200, 'opacity:1;transform:translateY(0px) rotate(0deg)'],
-      [2520, 'opacity:1;transform:translateY(-12px) rotate(0deg)'],
-      [2745, 'opacity:1;transform:translateY(-15px) rotate(6deg)'],
-      [2970, 'opacity:1;transform:translateY(-13px) rotate(0deg)'],
-      [3195, 'opacity:1;transform:translateY(-11px) rotate(-6deg)'],
-      [3400, 'opacity:1;transform:translateY(-13px) rotate(0deg)'],
-      // untethered now, so it drifts up rather than settling — this is the height the
-      // fall is bought with, and it is the whole reason the beat reads
-      [3700, 'opacity:1;transform:translateY(-14px) rotate(0deg)'],
-      // he is back under it by 3980 (see the Root keyframes) — one beat of a bare head,
-      // then it falls. the fall runs 250ms rather than the 90 it used to: 90ms of 9px on
-      // an 88px sprite is a cut, not a drop, which is why nobody ever saw this happen.
-      [3980, `opacity:1;transform:translateY(-14px) rotate(0deg);animation-timing-function:${IMPACT}`],
-      [4230, 'opacity:1;transform:translateY(4px) rotate(0deg)'],
-      [4285, 'opacity:1;transform:translateY(-1.5px) rotate(0deg)'],
+      // it holds its place for a beat while the body under it is still going, then there
+      // is nothing holding it up. the ground is 84 units below the brim, so this is a real
+      // fall rather than the twelve-pixel nudge it used to be
+      [2500, `opacity:1;transform:translateY(0px) rotate(0deg);animation-timing-function:${IMPACT}`],
+      [2620, 'opacity:1;transform:translateY(34px) rotate(-4deg)'],
+      [2780, 'opacity:1;transform:translateY(82px) rotate(-10deg)'],
+      [2850, 'opacity:1;transform:translateY(74px) rotate(-14deg)'],
+      [2930, 'opacity:1;transform:translateY(82px) rotate(-12deg)'],
+      // and there it lies, on the floor where he was standing, for as long as he is gone
+      [3980, `opacity:1;transform:translateY(82px) rotate(-12deg);animation-timing-function:${IMPACT}`],
+      // he is back under it now, so it comes home: up off the floor, past his head, down
+      [4130, 'opacity:1;transform:translateY(52px) rotate(-6deg)'],
+      [4250, 'opacity:1;transform:translateY(-7px) rotate(3deg)'],
       [4309, 'opacity:1;transform:translateY(0px) rotate(0deg)'],
       [4310, 'opacity:0;transform:translateY(0px) rotate(0deg)'],
       [T, 'opacity:0'],
@@ -699,9 +698,9 @@ const cssGlasses = (uid: string) => {
     kf(k('Seam'), T, [
       [0, 'opacity:0;transform:scale(1,0)'],
       [3400, 'opacity:0;transform:scale(1,0)'],
-      [3410, 'opacity:.95;transform:scale(1,0)'],
-      [3540, 'opacity:.95;transform:scale(1,1)'],
-      [3690, 'opacity:.95;transform:scale(1,1)'],
+      [3410, 'opacity:.5;transform:scale(1,0)'],
+      [3540, 'opacity:.5;transform:scale(1,1)'],
+      [3690, 'opacity:.42;transform:scale(1,1)'],
       [3700, 'opacity:0;transform:scale(3,1)'],
       [T, 'opacity:0'],
     ]),
@@ -2370,7 +2369,9 @@ const VfxLayer: React.FC<FxProps> = ({ uid, u, v }) => {
           {G_SPARKS.map((p, i) => (
             <path key={i} className={c(`gSpk${i}`)} opacity="0" d={diamond(p.x, p.y, 2.4)} fill="#e9d5ff" stroke="none" />
           ))}
-          <rect className={c('gSeam')} opacity="0" x="47" y="83.6" width="2" height="30" fill="#e9d5ff" stroke="none" />
+          {/* a line of light, not a drawn bar: near-white at full width read as a rendering
+              glitch at the size this actually plays at */}
+          <rect className={c('gSeam')} opacity="0" x="47.4" y="83.6" width="1.2" height="30" fill="#c4b5fd" stroke="none" filter={u('soft')} />
           {G_DUST.map((p, i) => (
             <path
               key={i}
