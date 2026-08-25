@@ -650,7 +650,7 @@ export const ChatSurface = forwardRef<ChatSurfaceHandle, ChatSurfaceProps>(funct
               ) : (
                 renderRich(
                   message.content,
-                  streaming && isLast ? <span className="animate-pulse">▍</span> : undefined,
+                  streaming && isLast ? <span className="motion-safe:animate-pulse">▍</span> : undefined,
                 )
               )}
             </div>
@@ -658,8 +658,17 @@ export const ChatSurface = forwardRef<ChatSurfaceHandle, ChatSurfaceProps>(funct
         })}
 
         {awaitingFirstToken && (
-          <div className="max-w-[92%] self-start text-sm text-white/75 leading-relaxed">
-            <span className="animate-pulse">▍</span>
+          <div
+            role="status"
+            // text-sm + leading-relaxed are the answer bubble's own strut, so the first
+            // token lands on this exact baseline instead of nudging the transcript
+            className="max-w-[92%] self-start text-sm leading-relaxed"
+          >
+            {/* the caps are css so a screen reader hears the word rather than spelling it
+                out, and inline-block keeps the sweep on one unbroken background box */}
+            <span className="chat-thinking inline-block text-[10px] tracking-[0.3em] uppercase">
+              Thinking
+            </span>
           </div>
         )}
       </div>
