@@ -25,7 +25,14 @@ const extractDelta = (payload: string): string => {
   try {
     chunk = JSON.parse(payload);
   } catch {
-    // partial or non-json keepalive, nothing to emit
+    // a chunk that will not parse is usually a keepalive or a split frame, but it
+    // can also be a real delta the model broke — an unescaped quote in a paper
+    // title once silently ate a word here and the reader saw a mangled sentence.
+    // dropping it stays the right call (a half-parsed frame is not text), but it
+    // must not be invisible: a swallowed word is a bug worth seeing in the console.
+    if (payload && payload !== '[DONE]' && payload.includes('"delta"')) {
+      console.warn('[ask] dropped an unparseable stream chunk:', payload.slice(0, 200));
+    }
     return '';
   }
 

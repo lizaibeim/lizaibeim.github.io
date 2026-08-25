@@ -89,10 +89,7 @@ const scrollToSection = (id: string) => {
 };
 
 export const AppContent: React.FC = () => {
-  const [audioEnabled, setAudioEnabled] = useState(false);
   const [activeSection, setActiveSection] = useState('home');
-  const audioCtxRef = useRef<AudioContext | null>(null);
-  const gainNodeRef = useRef<GainNode | null>(null);
 
   // Refs for horizontal scrolling sections
   const projectsScrollRef = useRef<HTMLDivElement>(null);
@@ -136,140 +133,12 @@ export const AppContent: React.FC = () => {
     };
   }, []);
 
-  // Manage Ambient Drone Volume based on active section
-  useEffect(() => {
-    if (gainNodeRef.current && audioCtxRef.current) {
-      // Much quieter, peaceful drone
-      const targetGain = (activeSection === 'home' && audioEnabled) ? 0.05 : 0.0;
-      gainNodeRef.current.gain.setTargetAtTime(targetGain, audioCtxRef.current.currentTime, 3);
-    }
-  }, [activeSection, audioEnabled]);
-
-  // Generative Ambient Drone using Web Audio API
-  const toggleAudio = () => {
-    if (!audioCtxRef.current) {
-      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-      audioCtxRef.current = ctx;
-      
-      const masterGain = ctx.createGain();
-      masterGain.gain.value = 0;
-      masterGain.connect(ctx.destination);
-      gainNodeRef.current = masterGain;
-
-      // Ethereal, floating frequencies pitched down for comfort (Fmaj9 add6: F2, C3, E3, G3, A3)
-      // Lower pitches and softer tones to avoid high-frequency fatigue
-      const freqs = [87.31, 130.81, 164.81, 196.00, 220.00]; 
-      freqs.forEach((freq, i) => {
-        const osc = ctx.createOscillator();
-        osc.type = 'triangle'; // Triangle wave for a warmer, softer synth-pad texture
-        osc.frequency.value = freq;
-        
-        // Lowpass filter to remove harsh high frequencies and make it sound distant/dreamy
-        const filter = ctx.createBiquadFilter();
-        filter.type = 'lowpass';
-        filter.frequency.value = freq * 1.5;
-        
-        const oscGain = ctx.createGain();
-        oscGain.gain.value = 0.015; // Very quiet base volume
-        
-        // LFO to create a "breathing" or "tide" effect (amplitude modulation)
-        const lfo = ctx.createOscillator();
-        lfo.type = 'sine';
-        lfo.frequency.value = 0.02 + (i * 0.01); // Each note breathes at a slightly different, very slow rate
-        
-        const lfoGain = ctx.createGain();
-        lfoGain.gain.value = 0.01; // Depth of the breath
-        
-        lfo.connect(lfoGain);
-        lfoGain.connect(oscGain.gain);
-        
-        osc.connect(filter);
-        filter.connect(oscGain);
-        oscGain.connect(masterGain);
-        
-        osc.start();
-        lfo.start();
-      });
-    }
-
-    if (audioEnabled) {
-      setAudioEnabled(false);
-    } else {
-      audioCtxRef.current.resume();
-      setAudioEnabled(true);
-    }
-  };
-
-  // Play a delicate glass wind chime sound when focusing
-  const playWindChime = () => {
-    if (!audioCtxRef.current || !audioEnabled || activeSection !== 'home') return;
-    const ctx = audioCtxRef.current;
-    const t = ctx.currentTime;
-    
-    // High-pitched pentatonic scale (C6, D6, E6, G6, A6) for glass/metal wind chimes
-    const baseFreqs = [1046.50, 1174.66, 1318.51, 1567.98, 1760.00];
-    
-    // Randomly pick 2 to 3 notes to simulate a gentle breeze hitting the chimes
-    const numChimes = 2 + Math.floor(Math.random() * 2);
-    
-    for (let i = 0; i < numChimes; i++) {
-      const freq = baseFreqs[Math.floor(Math.random() * baseFreqs.length)];
-      const delay = Math.random() * 0.15; // Random stagger for realism
-      const startTime = t + delay;
-      
-      // Fundamental tone (the main ring)
-      const osc1 = ctx.createOscillator();
-      osc1.type = 'sine';
-      osc1.frequency.value = freq;
-      
-      // Overtone (gives the metallic/glass "clink" at the start)
-      const osc2 = ctx.createOscillator();
-      osc2.type = 'sine';
-      osc2.frequency.value = freq * 2.76; 
-      
-      const gainNode = ctx.createGain();
-      gainNode.gain.setValueAtTime(0, startTime);
-      // Extremely sharp attack for the strike
-      gainNode.gain.linearRampToValueAtTime(0.015, startTime + 0.005);
-      // Long, shimmering exponential decay
-      gainNode.gain.exponentialRampToValueAtTime(0.0001, startTime + 3);
-      
-      const overtoneGain = ctx.createGain();
-      overtoneGain.gain.setValueAtTime(0, startTime);
-      overtoneGain.gain.linearRampToValueAtTime(0.008, startTime + 0.002);
-      overtoneGain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.3); // Overtone dies out fast
-      
-      osc1.connect(gainNode);
-      osc2.connect(overtoneGain);
-      
-      gainNode.connect(ctx.destination);
-      overtoneGain.connect(ctx.destination);
-      
-      osc1.start(startTime);
-      osc2.start(startTime);
-      osc1.stop(startTime + 3);
-      osc2.stop(startTime + 0.3);
-    }
-  };
-
-  // hover detail on the home section: a chime on enter, nothing on leave
-  const playFocusChime = () => {
-    playWindChime();
-  };
-
   return (
     <>
       {/* Fixed UI Layer */}
-      {/* the band is transparent, so only the controls themselves may capture hits */}
-      <header className="fixed top-6 left-6 right-6 md:top-8 md:left-16 md:right-16 z-50 pointer-events-none flex flex-wrap justify-between items-center gap-y-4 mix-blend-screen">
-        <button
-          onClick={toggleAudio}
-          data-companion-hint="Toggles a soft ambient drone on the home screen"
-          className="pointer-events-auto text-[10px] md:text-xs text-white/50 hover:text-white transition-colors tracking-[0.2em] uppercase whitespace-nowrap"
-        >
-          [ SOUND: {audioEnabled ? 'ON' : 'OFF'} ]
-        </button>
-
+      {/* the band is transparent, so only the nav links themselves may capture hits; the
+          nav is the band's only child and right-aligns itself, so no extra flex row here */}
+      <header className="fixed top-6 left-6 right-6 md:top-8 md:left-16 md:right-16 z-50 pointer-events-none mix-blend-screen">
         <nav className="pointer-events-none flex gap-4 md:gap-12 text-[10px] md:text-xs tracking-[0.2em] uppercase flex-wrap justify-end">
           {['home', 'about', 'projects', 'resume'].map((sec) => (
             <a
@@ -297,7 +166,6 @@ export const AppContent: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.1, ease: "easeOut" }}
           className="pointer-events-auto w-max mt-16 md:mt-0"
-          onMouseEnter={playFocusChime}
         >
           <h1 className="text-sm md:text-base font-light tracking-[0.3em] mb-2 text-white/90 uppercase flex items-center gap-3">
             Zaibei Li <span className="text-white/90 text-xs tracking-widest font-sans">李再倍</span>
@@ -309,7 +177,6 @@ export const AppContent: React.FC = () => {
           animate={{ opacity: 1, filter: 'blur(0px)' }}
           transition={{ duration: 1.1, delay: 0.25, ease: "easeOut" }}
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center w-full max-w-3xl pointer-events-auto px-6"
-          onMouseEnter={playFocusChime}
         >
           <h2 className="font-display italic text-3xl md:text-5xl lg:text-6xl text-white/80 font-light leading-tight mb-8 cursor-default">
             Capturing the <AnimatedRhythms /> <br className="hidden md:block"/> 
@@ -329,7 +196,6 @@ export const AppContent: React.FC = () => {
         >
           <div 
             className="text-[10px] md:text-xs text-white/30 tracking-[0.2em] uppercase leading-loose cursor-default"
-            onMouseEnter={playFocusChime}
           >
             <span className="text-white/50 block mb-2">[ Modalities ]</span>
             Video / Audio / Motion <br/>
@@ -338,7 +204,6 @@ export const AppContent: React.FC = () => {
           
           <a 
             href="mailto:zali@di.ku.dk"
-            onMouseEnter={playFocusChime}
             data-companion-hint="Opens your mail app to write Zaibei"
             className="text-[10px] md:text-xs text-white/50 hover:text-white transition-all duration-500 tracking-[0.2em] uppercase border-b border-white/20 hover:border-white pb-1"
           >

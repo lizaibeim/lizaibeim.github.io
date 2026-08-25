@@ -28,9 +28,9 @@ const HISTORY_LIMIT = 12;
 const NEAR_BOTTOM_PX = 80;
 
 const DEFAULT_SUGGESTIONS = [
-  'What does Zaibei research?',
-  'What is OpenMMLA?',
-  'Tell me about CoLA.',
+  'What problem does his research actually solve?',
+  'How does OpenMMLA capture a group session?',
+  'What can smart glasses see that a room camera cannot?',
   'How can I contact Zaibei?',
 ];
 
@@ -187,6 +187,42 @@ const STRAY_EMPHASIS = /(^|[\s(])\*(?=[^\s*])([^*\n]+?)\*(?=$|[\s.,;:!?)\]}»”
 
 const stripStrayEmphasis = (text: string) => text.replace(STRAY_EMPHASIS, '$1$2');
 
+// the model writes paper titles with json-style escaped quotes — \"OpenMMLA: an
+// IoT-based…\" — a habit picked up from json-shaped training data, and one the
+// persona now tells it to drop. two things go wrong when one reaches the page
+// anyway: the backslash is printed as itself, and the escape wedged between the
+// opening ** and the title is one more character between the parser and a clean
+// pair of markers. so the escaping is undone before the inline parser reads the
+// line, and a title in quotes, in bold, or in both comes out whole.
+//
+// an escape is a backslash IN FRONT OF PUNCTUATION and nothing else. a lone
+// backslash, and a backslash before a letter, a digit, a space or the end of the
+// line, is left exactly as it was typed: "C:\Users" keeps its slash, and a
+// backslash standing on its own in prose survives as itself.
+//
+// the two emphasis markers are deliberately NOT in this class — see
+// unescapeMarkers below.
+const ESCAPED_PUNCTUATION = /\\([\\!"#$%&'()+,\-./:;<=>?@[\]^`{|}~«»“”‘’「」（）【】《》])/g;
+
+const unescapePunctuation = (text: string) => text.replace(ESCAPED_PUNCTUATION, '$1');
+
+// "\*" and "\_" are held back until the run is a leaf and nothing will parse it
+// again. undoing them any earlier would hand the parser a marker the model had
+// explicitly escaped: "\*\*" would become a live "**", pair with the next run of
+// asterisks along, and open a bold span over text that was never meant to be
+// inside one. held back, they cannot — "\*\*" holds no two adjacent asterisks,
+// so neither BOLD_PATTERN nor STRAY_EMPHASIS sees a marker there at all.
+const ESCAPED_MARKERS = /\\([*_])/g;
+
+const unescapeMarkers = (text: string) => text.replace(ESCAPED_MARKERS, '$1');
+
+// one finished run of inline text: escaped markers become the bare character,
+// urls become anchors. `bold` marks the inside of a **span**, which keeps its
+// single asterisks — that text is already inside markers — where an ordinary run
+// has its stray emphasis stripped first.
+const renderRun = (text: string, bold = false): React.ReactNode =>
+  linkify(unescapeMarkers(bold ? text : stripStrayEmphasis(text)));
+
 type RichBlock =
   | { kind: 'p'; lines: string[] }
   | { kind: 'ul'; items: string[] }
@@ -235,34 +271,39 @@ function parseBlocks(text: string): RichBlock[] {
 // one line (or one list item) of inline content: bold spans become <strong>,
 // and every remaining run — including the inside of a bold span — goes through
 // linkify, so a URL inside a bullet or inside bold is still a real anchor.
+//
+// the punctuation unescape runs here rather than in renderRich, so it happens
+// AFTER the block parser has had its look: an escaped "\-" or "\1." at the start
+// of a line must not turn into a bullet or a numbered item on its way through.
 function parseInline(text: string, keyPrefix: string): React.ReactNode {
+  const line = unescapePunctuation(text);
   // a fresh regex per call: a module-level /g pattern would carry lastIndex
   // between calls and start dropping matches
   const pattern = new RegExp(BOLD_PATTERN.source, 'g');
   const nodes: React.ReactNode[] = [];
   let cursor = 0;
 
-  for (let match = pattern.exec(text); match; match = pattern.exec(text)) {
+  for (let match = pattern.exec(line); match; match = pattern.exec(line)) {
     if (match.index > cursor) {
       nodes.push(
         <React.Fragment key={`${keyPrefix}t${cursor}`}>
-          {linkify(stripStrayEmphasis(text.slice(cursor, match.index)))}
+          {renderRun(line.slice(cursor, match.index))}
         </React.Fragment>,
       );
     }
     nodes.push(
       <strong key={`${keyPrefix}b${match.index}`} className={BOLD_CLASS}>
-        {linkify(match[1])}
+        {renderRun(match[1], true)}
       </strong>,
     );
     cursor = match.index + match[0].length;
   }
 
-  if (nodes.length === 0) return linkify(stripStrayEmphasis(text));
-  if (cursor < text.length) {
+  if (nodes.length === 0) return renderRun(line);
+  if (cursor < line.length) {
     nodes.push(
       <React.Fragment key={`${keyPrefix}t${cursor}`}>
-        {linkify(stripStrayEmphasis(text.slice(cursor)))}
+        {renderRun(line.slice(cursor))}
       </React.Fragment>,
     );
   }

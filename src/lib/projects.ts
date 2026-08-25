@@ -57,8 +57,8 @@ export const PROJECTS: Project[] = [
     publications: [],
     suggestions: [
       "What does CoLA sense, and how?",
-      "What is the Meta Project Aria collaboration?",
-      "How does CoLA use smart glasses?",
+      "How does the AI facilitator work?",
+      "What runs on the device versus the server?",
     ],
   },
   {
@@ -90,8 +90,8 @@ export const PROJECTS: Project[] = [
     ],
     suggestions: [
       "What can the OpenMMLA toolkit collect?",
-      "What was the Life Campus collaboration?",
-      "What did the LAK 2025 paper win?",
+      "How accurate is the indoor positioning?",
+      "How would I run it in my own lab?",
     ],
   },
   {
@@ -121,9 +121,9 @@ export const PROJECTS: Project[] = [
       },
     ],
     suggestions: [
-      "How did the sociometric badges work?",
+      "What was inside a sociometric badge?",
+      "How did it track where people stood?",
       "Why did mBox become OpenMMLA?",
-      "What was the AprilTag tracking for?",
     ],
   },
   {
@@ -148,8 +148,8 @@ export const PROJECTS: Project[] = [
     ],
     publications: [],
     suggestions: [
-      "What is MotionMatching built with?",
-      "Is this part of the doctoral research?",
+      "How does the pose search actually work?",
+      "What is motion matching, as a technique?",
       "Where can I find the code?",
     ],
   },
@@ -176,9 +176,9 @@ export const PROJECTS: Project[] = [
     ],
     publications: [],
     suggestions: [
-      "What does the CasperFFG implementation do?",
-      "Which degree was this capstone for?",
-      "How does it relate to the current research?",
+      "What is Casper FFG, as a protocol?",
+      "How does the finality mechanism work here?",
+      "What does the simulation actually run?",
     ],
   },
 ];
