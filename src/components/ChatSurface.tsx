@@ -453,8 +453,8 @@ export const ChatSurface = forwardRef<ChatSurfaceHandle, ChatSurfaceProps>(funct
   };
 
   // the field is only worth raising (with its soft keyboard) on pointer devices
-  const canRaiseInput = () =>
-    autoFocus && window.matchMedia('(min-width: 768px) and (pointer: fine)').matches;
+  const isPointerDevice = () => window.matchMedia('(min-width: 768px) and (pointer: fine)').matches;
+  const canRaiseInput = () => autoFocus && isPointerDevice();
 
   // drops the whole thread — including any refusal the classifier would keep
   // reading as an off-topic conversation — and hands back the empty state
@@ -466,6 +466,19 @@ export const ChatSurface = forwardRef<ChatSurfaceHandle, ChatSurfaceProps>(funct
     setInput('');
     setStreaming(false);
     if (canRaiseInput()) inputRef.current?.focus();
+  };
+
+  // drops the reader and nothing else, so the half-written answer stays on the page.
+  // send() would clear `streaming` on its own once the abort surfaced in the catch,
+  // but only a microtask or two later; doing it here turns the button back into send
+  // on the click itself, and the ownership guard in the finally makes that a no-op.
+  const stop = () => {
+    abortRef.current?.abort();
+    abortRef.current = null;
+    setStreaming(false);
+    // the field is where the visitor carries on, and it is about to be the only
+    // thing left focusable once the button goes back to being a disabled send
+    if (isPointerDevice()) inputRef.current?.focus();
   };
 
   useImperativeHandle(ref, () => ({ reset }));
@@ -685,15 +698,26 @@ export const ChatSurface = forwardRef<ChatSurfaceHandle, ChatSurfaceProps>(funct
           aria-label="Ask a question"
           autoComplete="off"
           enterKeyHint="send"
-          className="min-w-0 flex-1 bg-transparent text-sm text-white/80 placeholder:text-white/25 focus:outline-none"
+          // 16px below md: mobile safari zooms the page into any field it focuses
+          // under that size, and leaves the visitor zoomed in hunting for the button
+          className="min-w-0 flex-1 bg-transparent text-base md:text-sm text-white/80 placeholder:text-white/25 focus:outline-none"
         />
         <button
-          type="submit"
-          disabled={streaming || !input.trim()}
-          aria-label="Send message"
+          type={streaming ? 'button' : 'submit'}
+          onClick={streaming ? stop : undefined}
+          // an empty field disables sending but must never disable stopping — send()
+          // clears the field, so it is empty for the whole of a stream
+          disabled={!streaming && !input.trim()}
+          aria-label={streaming ? 'Stop generating' : 'Send message'}
           className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/20 text-sm text-white/60 transition-colors hover:border-white/60 hover:text-white disabled:pointer-events-none disabled:opacity-30"
         >
-          ↑
+          {streaming ? (
+            // the bordered circle is already the button, so the stop glyph is only the
+            // square inside it; bg-current picks up the hover colour like the arrow does
+            <span aria-hidden="true" className="block h-2 w-2 rounded-[1px] bg-current" />
+          ) : (
+            '↑'
+          )}
         </button>
       </form>
     </div>
