@@ -37,6 +37,11 @@ const VIEW_Y = -34;
 const VIEW_W = 162;
 const VIEW_H = 159;
 
+// he does not walk any more, he flies — and this picks what he flies on. only the carpet
+// is drawn today; the cloud that was meant to sit beside it never arrived, so the union is
+// here to keep the swap a one-line edit rather than a rewrite when it does.
+const RIDE: 'carpet' | 'cloud' = 'carpet';
+
 // the svg is bigger than its `size` box now, so it has to hang outside the slot a consumer
 // gives it. a caller keeps a size x size slot, positions the sprite at this offset inside
 // it, and the character lands exactly where a plain size x size svg used to put it —
@@ -289,6 +294,17 @@ const rigOrigins = (uid: string, key: string | null) => {
     // base groups that the polish pass now transforms
     ['brows', '48px 30.2px'],
     ['mouthopen', '48.4px 49.8px'],
+    // flight rig: the vehicle, and the parts of him that only exist off the ground
+    ['carpet', '48px 115px'],
+    ['carpetLip', '48px 115px'],
+    ['carpetFringeB', '-10.3px 112.9px'],
+    ['carpetFringeF', '104.4px 115.9px'],
+    ['carpetAura', '48px 119px'],
+    ['flyRise', '48px 113.6px'],
+    ['flyLegs', '48px 97px'],
+    ['flyStaff', '15.4px 81.8px'],
+    ['flyTailA', '27px 84px'],
+    ['flyTailB', '26.5px 89.5px'],
     // replacement face
     ['vfEyes', '48px 40px'],
     ['vfPupils', '48.3px 41.5px'],
@@ -1924,6 +1940,15 @@ const VIGNETTE_CSS: Record<VignetteId, (uid: string) => string> = {
 };
 
 // ------------------------------------------------------------- the base sprite
+//
+// the walk state is flight now, and the whole seated pose is pinned here rather than in the
+// animation block below: a reduced-motion visitor still has to be sitting ON the carpet, not
+// standing on it. the flight keyframes open on the same values, and an animation outranks a
+// normal declaration, so none of this fights the cycles when they do run.
+//
+// legF and legB cannot fold — each is one rigid hip-to-toe segment with no knee, so laying
+// it flat would throw a boot 43 units sideways. they retract behind the coat instead (every
+// extreme lands inside the coat/collar silhouette) and a purpose-drawn crossed pair fades in.
 const baseStatic = (uid: string, key: string | null) => `
 .${uid}-shadow{transform-box:view-box;transform-origin:48px 114.5px}
 .${uid}-body{transform-box:view-box;transform-origin:48px 113.6px}
@@ -1942,6 +1967,13 @@ const baseStatic = (uid: string, key: string | null) => `
 .${uid}-glow{transform-box:view-box;transform-origin:9px 15px;opacity:.85}
 .${uid}-lids{opacity:0}
 .${uid}-mouthopen{opacity:0}
+.${uid}-carpet,.${uid}-carpetLip,.${uid}-flyLegs,.${uid}-flyTailA,.${uid}-flyTailB{opacity:0}
+.${uid}-walk .${uid}-carpet,.${uid}-walk .${uid}-carpetLip,.${uid}-walk .${uid}-flyLegs,.${uid}-walk .${uid}-flyTailA,.${uid}-walk .${uid}-flyTailB{opacity:1}
+.${uid}-walk .${uid}-flyRise{transform:translateY(-10px) rotate(2.4deg)}
+.${uid}-walk .${uid}-legB{transform:translate(3px,-31px) rotate(9deg)}
+.${uid}-walk .${uid}-legF{transform:translate(-3px,-31px) rotate(-9deg)}
+.${uid}-walk .${uid}-flyStaff{transform:translateY(-9px) rotate(-3.4deg)}
+.${uid}-walk .${uid}-shadow{transform:translateY(2px) scale(.58,.47);opacity:.3}
 ${rigOrigins(uid, key)}
 ${key ? vfxShared(uid) : ''}`;
 
@@ -1954,8 +1986,17 @@ ${key ? vfxShared(uid) : ''}`;
 // 113.6 - 113.3k + t, so a stretch throws it a long way. the view box now carries 26 units of
 // air above y=0 and nothing shears any more, but the squash-dominant shaping below is kept
 // anyway — it is what gives the chibi weight, not a clipping workaround.
+//
+// the walk state is the exception: nothing there touches the ground, so nothing squashes. its
+// base cycle is 2.4s, four times the .6s footfall it replaced — the same rhythm family at a
+// quarter tempo. the hat (1.9s), the coat tails (1.5s / 1.7s), the carpet (1.6s), the aura
+// (2.2s) and the book (3.4s) are deliberately not harmonics of it, so nothing marches in
+// lockstep with the bob. the lean pivots on the feet at y=113.6, seventeen units below the
+// seat: the seat barely moves while the hat tip swings, so he tips without sliding off.
 const baseAnim = (uid: string) => `
-.${uid}-legF,.${uid}-legB,.${uid}-armB,.${uid}-armF,.${uid}-sway,.${uid}-cone,.${uid}-head,.${uid}-book{transition:transform .18s ease-out}
+.${uid}-legF,.${uid}-legB,.${uid}-armB,.${uid}-armF,.${uid}-sway,.${uid}-cone,.${uid}-head,.${uid}-book,.${uid}-flyStaff{transition:transform .18s ease-out}
+.${uid}-carpet,.${uid}-carpetLip,.${uid}-flyLegs,.${uid}-flyTailA,.${uid}-flyTailB{transition:opacity .2s ease-out}
+.${uid}-flyRise{transition:transform .3s cubic-bezier(.22,.86,.3,1)}
 .${uid}-idle .${uid}-body{animation:${uid}Float 2.6s ease-in-out infinite}
 .${uid}-idle .${uid}-breathe{animation:${uid}Breath 2.6s ease-in-out infinite}
 .${uid}-idle .${uid}-head{animation:${uid}HeadIdle 2.6s ease-in-out infinite}
@@ -1965,19 +2006,26 @@ const baseAnim = (uid: string) => `
 .${uid}-idle .${uid}-glow{animation:${uid}Pulse 2.6s ease-in-out infinite}
 .${uid}-idle .${uid}-star{animation:${uid}Star 2.6s ease-in-out infinite}
 .${uid}-idle .${uid}-book{animation:${uid}BookIdle 4.3s ease-in-out infinite}
-.${uid}-walk .${uid}-body{animation:${uid}WalkBob .6s ease-in-out infinite}
-.${uid}-walk .${uid}-legF{animation:${uid}LegA .6s ease-in-out infinite}
-.${uid}-walk .${uid}-legB{animation:${uid}LegB .6s ease-in-out infinite}
-.${uid}-walk .${uid}-armB{animation:${uid}ArmWalk .6s ease-in-out infinite}
-.${uid}-walk .${uid}-armF{animation:${uid}ArmFWalk .6s ease-in-out infinite}
-.${uid}-walk .${uid}-sway{animation:${uid}Sway .6s ease-in-out infinite}
-.${uid}-walk .${uid}-cone{animation:${uid}ConeWalk .6s ease-in-out infinite}
-.${uid}-walk .${uid}-head{animation:${uid}HeadWalk .6s ease-in-out infinite}
-.${uid}-walk .${uid}-brows{animation:${uid}BrowWalk .6s ease-in-out infinite}
-.${uid}-walk .${uid}-shadow{animation:${uid}ShadowWalk .6s ease-in-out infinite}
+.${uid}-walk .${uid}-body{animation:${uid}FlyBob 2.4s ease-in-out infinite}
+.${uid}-walk .${uid}-breathe{animation:${uid}Breath 3.2s ease-in-out infinite}
+.${uid}-walk .${uid}-sway{animation:${uid}FlySway 2.4s ease-in-out infinite}
+.${uid}-walk .${uid}-flyLegs{animation:${uid}FlyLegs 2.4s ease-in-out infinite}
+.${uid}-walk .${uid}-flyTailA{animation:${uid}FlyTailA 1.5s ease-in-out infinite}
+.${uid}-walk .${uid}-flyTailB{animation:${uid}FlyTailB 1.7s ease-in-out infinite}
+.${uid}-walk .${uid}-armB{animation:${uid}FlyArmB 2.4s ease-in-out infinite}
+.${uid}-walk .${uid}-armF{animation:${uid}FlyArmF 2.4s ease-in-out infinite}
+.${uid}-walk .${uid}-flyStaff{animation:${uid}FlyStaff 2.4s ease-in-out infinite}
+.${uid}-walk .${uid}-cone{animation:${uid}FlyCone 1.9s ease-in-out infinite}
+.${uid}-walk .${uid}-head{animation:${uid}FlyHead 2.4s ease-in-out infinite}
+.${uid}-walk .${uid}-brows{animation:${uid}FlyBrow 2.4s ease-in-out infinite}
+.${uid}-walk .${uid}-shadow{animation:${uid}FlyShadow 2.4s ease-in-out infinite;filter:url(#${uid}-soft)}
 .${uid}-walk .${uid}-glow{animation:${uid}Pulse 1.8s ease-in-out infinite}
 .${uid}-walk .${uid}-star{animation:${uid}Star 1.8s ease-in-out infinite}
-.${uid}-walk .${uid}-book{animation:${uid}BookWalk .6s ease-in-out infinite}
+.${uid}-walk .${uid}-book{animation:${uid}FlyBook 3.4s ease-in-out infinite}
+.${uid}-walk .${uid}-carpet,.${uid}-walk .${uid}-carpetLip{animation:${uid}CarpetRipple 1.6s ease-in-out infinite}
+.${uid}-walk .${uid}-carpetFringeB{animation:${uid}CarpetFringe 1.6s ease-in-out -.12s infinite}
+.${uid}-walk .${uid}-carpetFringeF{animation:${uid}CarpetFringe 1.6s ease-in-out infinite}
+.${uid}-walk .${uid}-carpetAura{animation:${uid}CarpetAura 2.2s ease-in-out infinite}
 .${uid}-talk .${uid}-body{animation:${uid}TalkBob .78s ease-in-out infinite}
 .${uid}-talk .${uid}-breathe{animation:${uid}Breath 1.3s ease-in-out infinite}
 .${uid}-talk .${uid}-head{animation:${uid}HeadTalk .78s ease-in-out infinite}
@@ -2004,17 +2052,22 @@ const baseAnim = (uid: string) => `
 @keyframes ${uid}PulseFast{0%,100%{opacity:.86;transform:scale(1)}50%{opacity:1;transform:scale(1.24)}}
 @keyframes ${uid}Blink{0%,90%,100%{transform:scaleY(1)}92.4%,95%{transform:scaleY(.08)}}
 @keyframes ${uid}Lid{0%,91.6%,95.8%,100%{opacity:0}92.6%,94.8%{opacity:1}}
-@keyframes ${uid}WalkBob{0%,50%,100%{transform:translateY(-2.2px) scale(.98,1)}14%,64%{transform:translateY(-1.3px) scale(1,1)}25%,75%{transform:translateY(0) scale(1.07,.935)}34%,84%{transform:translateY(-.7px) scale(1.01,.995)}}
-@keyframes ${uid}LegA{0%,50%,100%{transform:rotate(0deg)}14%,64%{transform:rotate(8deg)}25%,75%{transform:rotate(12deg)}38%,88%{transform:rotate(5.5deg)}}
-@keyframes ${uid}LegB{0%,50%,100%{transform:rotate(0deg)}14%,64%{transform:rotate(-8deg)}25%,75%{transform:rotate(-12deg)}38%,88%{transform:rotate(-5.5deg)}}
-@keyframes ${uid}ArmWalk{0%,100%{transform:rotate(0deg)}22%{transform:rotate(-14deg)}50%{transform:rotate(0deg)}72%{transform:rotate(14deg)}}
-@keyframes ${uid}ArmFWalk{0%,100%{transform:rotate(0deg)}22%{transform:rotate(5deg)}50%{transform:rotate(0deg)}72%{transform:rotate(-5deg)}}
-@keyframes ${uid}Sway{0%,50%,100%{transform:rotate(0deg)}18%{transform:rotate(-2.8deg)}68%{transform:rotate(2.8deg)}}
-@keyframes ${uid}ConeWalk{0%,50%,100%{transform:rotate(0deg)}32%{transform:rotate(4.5deg)}82%{transform:rotate(-4.5deg)}}
-@keyframes ${uid}HeadWalk{0%,50%,100%{transform:translateY(0) rotate(0deg)}25%,75%{transform:translateY(.8px) rotate(0deg)}30%{transform:translateY(.5px) rotate(2deg)}80%{transform:translateY(.5px) rotate(-2deg)}}
-@keyframes ${uid}BrowWalk{0%,50%,100%{transform:translateY(0)}25%,75%{transform:translateY(.5px)}}
-@keyframes ${uid}ShadowWalk{0%,50%,100%{transform:scale(.86,.78);opacity:.72}25%,75%{transform:scale(1.08,1.05);opacity:1}}
-@keyframes ${uid}BookWalk{0%,100%{transform:translate(1.3px,1.2px) rotate(-3deg)}25%{transform:translate(-.5px,-1.1px) rotate(2.2deg)}50%{transform:translate(-1.3px,1.2px) rotate(3deg)}75%{transform:translate(.5px,-1.1px) rotate(-2.2deg)}}
+@keyframes ${uid}FlyBob{0%,100%{transform:translateY(1.2px) rotate(-.3deg)}34%{transform:translateY(-1.6px) rotate(.3deg)}68%{transform:translateY(0) rotate(-.1deg)}}
+@keyframes ${uid}FlySway{0%,100%{transform:rotate(1deg)}40%{transform:rotate(2.2deg)}72%{transform:rotate(1.4deg)}}
+@keyframes ${uid}FlyHead{0%,100%{transform:translateY(.5px) rotate(-1.3deg)}30%{transform:translateY(-.3px) rotate(-2.4deg)}64%{transform:translateY(.2px) rotate(-1deg)}}
+@keyframes ${uid}FlyCone{0%,100%{transform:rotate(-8.6deg)}36%{transform:rotate(-12.4deg)}70%{transform:rotate(-8deg)}}
+@keyframes ${uid}FlyBrow{0%,100%{transform:translateY(-.45px)}45%{transform:translateY(-.9px)}}
+@keyframes ${uid}FlyArmB{0%,100%{transform:rotate(3.4deg)}42%{transform:rotate(5.4deg)}74%{transform:rotate(4deg)}}
+@keyframes ${uid}FlyArmF{0%,100%{transform:rotate(-1.4deg)}46%{transform:rotate(-3deg)}}
+@keyframes ${uid}FlyStaff{0%,100%{transform:translateY(-9px) rotate(-3.4deg)}38%{transform:translateY(-10.3px) rotate(-5deg)}72%{transform:translateY(-9.3px) rotate(-3.7deg)}}
+@keyframes ${uid}FlyLegs{0%,100%{transform:translateY(.5px) rotate(-.7deg)}38%{transform:translateY(-.3px) rotate(.7deg)}70%{transform:translateY(.3px) rotate(-.2deg)}}
+@keyframes ${uid}FlyBook{0%,100%{transform:translate(-3.2px,1.2px) rotate(-2.2deg)}33%{transform:translate(-4.4px,-.5px) rotate(-.6deg)}66%{transform:translate(-2.6px,2.2px) rotate(-3deg)}}
+@keyframes ${uid}FlyShadow{0%,100%{transform:translateY(2px) scale(.62,.5);opacity:.34}34%{transform:translateY(2.7px) scale(.52,.42);opacity:.25}68%{transform:translateY(2.2px) scale(.58,.47);opacity:.3}}
+@keyframes ${uid}FlyTailA{0%,100%{transform:rotate(-2deg) scaleX(1)}30%{transform:rotate(3.4deg) scaleX(1.07)}62%{transform:rotate(-.6deg) scaleX(.97)}}
+@keyframes ${uid}FlyTailB{0%,100%{transform:rotate(2.6deg) scaleX(.98)}34%{transform:rotate(-2.2deg) scaleX(1.06)}70%{transform:rotate(1.2deg) scaleX(1)}}
+@keyframes ${uid}CarpetRipple{0%,100%{transform:translateY(0) rotate(.45deg) skewY(1.8deg) scaleY(.984)}25%{transform:translateY(-1px) rotate(0deg) skewY(0deg) scaleY(1.028)}50%{transform:translateY(0) rotate(-.45deg) skewY(-1.8deg) scaleY(.984)}75%{transform:translateY(.9px) rotate(0deg) skewY(0deg) scaleY(1.028)}}
+@keyframes ${uid}CarpetFringe{0%,50%,100%{transform:rotate(0deg) scaleX(1)}25%{transform:rotate(3.2deg) scaleX(1.05)}75%{transform:rotate(-3.2deg) scaleX(1.05)}}
+@keyframes ${uid}CarpetAura{0%,100%{transform:scale(1,.92);opacity:.5}50%{transform:scale(1.06,1.12);opacity:.85}}
 @keyframes ${uid}TalkBob{0%,100%{transform:translateY(0) scale(1.014,.988)}18%{transform:translateY(-1.5px) scale(.995,1)}50%{transform:translateY(-2.2px) scale(.985,1)}82%{transform:translateY(-1px) scale(1.005,1)}}
 @keyframes ${uid}HeadTalk{0%,100%{transform:translateY(0) rotate(-2.2deg) scale(1,1)}28%{transform:translateY(-1.5px) rotate(1.1deg) scale(1.02,.985)}50%{transform:translateY(-1.3px) rotate(2.2deg) scale(1,1)}78%{transform:translateY(-.5px) rotate(-.7deg) scale(.99,1.014)}}
 @keyframes ${uid}ConeTalk{0%,100%{transform:rotate(4.3deg)}34%{transform:rotate(-2.5deg)}62%{transform:rotate(-4.3deg)}}
@@ -2541,6 +2594,48 @@ const HAT_CONE_D =
 const HAT_BRIM_D =
   'M21 22.4C22.4 17.4 30.2 14 39.8 12.9C42.6 12.6 45.2 12.5 48 12.5C50.8 12.5 53.4 12.6 56.2 12.9C65.8 14 73.6 17.4 75 22.4C75 24.9 66.4 26.4 56.5 26.9C51 27.2 45 27.2 39.5 26.9C29.6 26.4 21 24.9 21 22.4Z';
 
+// the flying carpet, drawn once and reused for the deck, its underside and the pattern clip,
+// the way the hat cone already is. a shallow S down the long axis: the left half crests, the
+// right half troughs, and the inflection lands at x=48 so the flattest stretch is exactly
+// where he sits.
+//
+// the near edge runs 18 units below the far edge, and that gap is the whole thing. the first
+// pass ran it at 10 and the deck read as a broomstick — 119 units long against a 10-unit face
+// is a stick, and the fringe at each end finished the joke. 18 gives roughly 13 screen pixels
+// of visible top surface at size 88, enough to read as a plane he is sitting on rather than a
+// line he is balanced on. the end caps bulge only ~3: at 4 the border wraps the ends and the
+// whole thing turns into a rolled scarf.
+const CARPET_D =
+  'M-9 108C-2.4 105.4 7.6 103.6 17 104.2C27 104.9 38 107.6 48 110.5C58 112 68 112.3 77 112C86 112 97 111.2 105 109.8C108.2 113.5 108.3 124.5 105 128.1C97 128.9 86 129.3 77 129.3C68 129.5 58 129.4 48 128.9C38 126.6 27 124 17 123.3C7.6 122.6 -2.4 124.1 -9 125.9C-12.2 122 -12.3 111.5 -9 108Z';
+// the centreline of the deck, midway between the two long edges: the pattern's spine, and the
+// line his boots land on
+const CARPET_SPINE_D =
+  'M-9 116.95C-2.4 114.3 7.6 113.1 17 113.75C27 114.45 38 117.1 48 119.7C58 120.7 68 120.9 77 120.65C86 120.65 97 120.2 105 118.95';
+// five strands per end, spread over the taller cap. they start under the deck so the roots
+// never show
+const CARPET_FRINGE_B_D =
+  'M-10.2 109.6C-13.8 108.6 -17.4 107.8 -20.6 106.8M-11 113.6C-14.6 113 -18.2 112.6 -21.4 111.8M-11.4 117.4C-15.2 117.4 -18.8 117.2 -22 116.6M-11 121.4C-14.6 122 -18.2 122.4 -21.4 122M-10.2 124.8C-13.6 125.8 -17 126.6 -20 126.8';
+const CARPET_FRINGE_F_D =
+  'M104.2 111.4C107.8 110.4 111.4 109.6 114.6 108.6M105 115.4C108.6 114.8 112.2 114.4 115.4 113.6M105.4 119.2C109.2 119.2 112.8 119 116 118.4M105 123.2C108.6 123.8 112.2 124.2 115.4 123.8M104.2 126.8C107.6 127.8 111 128.6 114 128.8';
+// the near edge again as a lens tapering to nothing at both ends, so the piece drawn in FRONT
+// of him has no cut edge to give itself away. 7.7 deep at the centre, which is what it takes
+// to bring the front edge up level with his heels — any shallower and it is just a second copy
+// of a line already drawn behind him. its lower boundary is numerically the same stretch of
+// CARPET_D: move one and the other has to move or a bright seam opens.
+const CARPET_LIP_D =
+  'M17 123.3C27 124 38 126.6 48 128.9C58 129.4 68 129.5 77 129.3C68 126.5 58 123.5 48 121.2C38 121.4 27 121.5 17 123.3Z';
+const CARPET_LIP_TOP_D = 'M17 123.3C27 121.5 38 121.4 48 121.2C58 123.5 68 126.5 77 129.3';
+const CARPET_LIP_BOT_D = 'M17 123.3C27 124 38 126.6 48 128.9C58 129.4 68 129.5 77 129.3';
+const carpetDiamond = (cx: number, cy: number, w: number, h: number) =>
+  `M${cx - w} ${cy}L${cx} ${cy - h}L${cx + w} ${cy}L${cx} ${cy + h}Z`;
+
+// the carpet is drawn around a figure standing on it, feet at y=113.6. seated, his lowest paint
+// is the near boot heel at y≈95, so the whole deck rides up until its spine — the midline of
+// the visible surface — meets that heel, which is 25 units. it is a wrapper translate rather
+// than baked into the paths because the ripple animates `transform` on the deck itself and
+// would overwrite anything set there.
+const CARPET_LIFT = -25;
+
 // a hand-painted chibi warden: bold contour, gradient shading, one amber crystal
 export const CompanionSprite: React.FC<CompanionSpriteProps> = ({
   facing,
@@ -2715,6 +2810,47 @@ export const CompanionSprite: React.FC<CompanionSpriteProps> = ({
           <stop offset="0.5" stopColor="#8b3fd4" stopOpacity="0.2" />
           <stop offset="1" stopColor="#8b3fd4" stopOpacity="0" />
         </radialGradient>
+        {/* the carpet: a plum field ending darker than the coat's darkest violet, so the coat
+            stays the brightest thing on the page */}
+        <linearGradient id={g('carpetTop')} x1="0.04" y1="0" x2="0.96" y2="1">
+          <stop offset="0" stopColor="#6b3072" />
+          <stop offset="0.28" stopColor="#4e2160" />
+          <stop offset="0.62" stopColor="#3f1c56" />
+          <stop offset="1" stopColor="#2c1444" />
+        </linearGradient>
+        <linearGradient id={g('carpetUnder')} x1="0.1" y1="0" x2="0.9" y2="1">
+          <stop offset="0" stopColor="#2b1440" />
+          <stop offset="0.5" stopColor="#1d0c2f" />
+          <stop offset="1" stopColor="#140821" />
+        </linearGradient>
+        {/* the one warm note on the whole sprite: a madder red kept below the coat in both
+            value and chroma, so it contrasts without competing */}
+        <linearGradient id={g('carpetBand')} x1="0.05" y1="0" x2="0.95" y2="1">
+          <stop offset="0" stopColor="#c2455c" />
+          <stop offset="0.34" stopColor="#972f47" />
+          <stop offset="0.72" stopColor="#7d2338" />
+          <stop offset="1" stopColor="#5c1729" />
+        </linearGradient>
+        {/* its own gold rather than a reuse of `gold`, which finishes at x2=0.55 and would
+            leave the right half of a 119-unit-wide carpet flat */}
+        <linearGradient id={g('carpetTrim')} x1="0" y1="0.1" x2="1" y2="0.9">
+          <stop offset="0" stopColor="#ffe9a8" />
+          <stop offset="0.24" stopColor="#f0c258" />
+          <stop offset="0.52" stopColor="#c9922c" />
+          <stop offset="0.78" stopColor="#e8bb52" />
+          <stop offset="1" stopColor="#c08a22" />
+        </linearGradient>
+        <radialGradient id={g('carpetAuraG')} cx="0.5" cy="0.5" r="0.5">
+          <stop offset="0" stopColor="#d98cf7" stopOpacity="0.3" />
+          <stop offset="0.45" stopColor="#9a45db" stopOpacity="0.13" />
+          <stop offset="1" stopColor="#6c29a8" stopOpacity="0" />
+        </radialGradient>
+        <clipPath id={g('carpetClip')}>
+          <path d={CARPET_D} />
+        </clipPath>
+        <clipPath id={g('carpetLipClip')}>
+          <path d={CARPET_LIP_D} />
+        </clipPath>
         <radialGradient id={g('shadow')} cx="0.5" cy="0.5" r="0.5">
           <stop offset="0" stopColor="#1c0d2b" stopOpacity="0.55" />
           <stop offset="0.6" stopColor="#1c0d2b" stopOpacity="0.2" />
@@ -2750,326 +2886,460 @@ export const CompanionSprite: React.FC<CompanionSpriteProps> = ({
             />
           </g>
 
-          <g
-            className={g('body')}
-            stroke="#2a1a3a"
-            strokeLinejoin="round"
-            strokeLinecap="round"
-          >
-            {/* the vignette rig hangs off the feet, so the base cycles keep running underneath */}
-            <g className={g('actRoot')}>
-              {/* legs and boots, tucked under the coat hem */}
-              <g className={g('legB')}>
-                <g className={g('actLegB')}>
-                  <path d="M40 72L39.6 98" fill="none" stroke={u('trouser')} strokeWidth="11" strokeLinecap="butt" />
-                  <path d="M35 96L45 96L45 107C45 111.4 42.8 113.6 38.6 113.6L32.4 113.6C29.2 113.6 28 111.2 28.9 108.6L32 99.5C32.5 97.2 33.4 96 35 96Z" fill={u('boot')} strokeWidth="2.1" />
-                  <path d="M35 96L45 96L45 100.6L31.55 100.6L32 99.5C32.5 97.2 33.4 96 35 96Z" fill={u('gold')} strokeWidth="1.3" />
-                  <path d="M34.4 101.4C33.6 104 32.9 106.4 32.4 108.6" fill="none" stroke="#a487ac" strokeWidth="1.5" opacity="0.42" />
-                  <path d="M30.6 109.6C32.6 112.2 35.6 113.2 39.4 113" fill="none" stroke="#9a7aa2" strokeWidth="1.3" opacity="0.6" />
-                  <path d="M32.5 97C31.4 101 30.2 105.6 29.7 108.8" fill="none" stroke="#ffd0a0" strokeWidth="2" opacity="0.6" filter={u('soft')} />
+          {/* the vehicle, behind him and outside every act* group so no vignette can reach it.
+              only the walk class reveals it. the near edge that runs in front of his shins is
+              a second group, drawn after the body. */}
+          {RIDE === 'carpet' && (
+            <g transform={`translate(0,${CARPET_LIFT})`}>
+              <g className={g('carpet')}>
+                <ellipse
+                  className={g('carpetAura')}
+                  cx="48"
+                  cy="120"
+                  rx="68"
+                  ry="15"
+                  fill={u('carpetAuraG')}
+                  stroke="none"
+                />
+                {/* the same silhouette dropped 0.9, so a dark selvage peeks out underneath */}
+                <path
+                  d={CARPET_D}
+                  transform="translate(0,0.9)"
+                  fill={u('carpetUnder')}
+                  stroke="#2a1a3a"
+                  strokeWidth="2.1"
+                  strokeLinejoin="round"
+                />
+                {/* fringe first, so the strands tuck under the deck instead of onto it */}
+                <g className={g('carpetFringeB')}>
+                  <path d={CARPET_FRINGE_B_D} fill="none" stroke={u('carpetTrim')} strokeWidth="1.5" strokeLinecap="round" />
                 </g>
-              </g>
-              <g className={g('legF')}>
-                <g className={g('actLegF')}>
-                  <path d="M56 72L56.4 98" fill="none" stroke={u('trouser')} strokeWidth="11" strokeLinecap="butt" />
-                  <path d="M61 96L51 96L51 107C51 111.4 53.2 113.6 57.4 113.6L63.6 113.6C66.8 113.6 68 111.2 67.1 108.6L64 99.5C63.5 97.2 62.6 96 61 96Z" fill={u('boot')} strokeWidth="2.1" />
-                  <path d="M61 96L51 96L51 100.6L64.45 100.6L64 99.5C63.5 97.2 62.6 96 61 96Z" fill={u('gold')} strokeWidth="1.3" />
-                  <path d="M65.4 109.6C63.4 112.2 60.4 113.2 56.6 113" fill="none" stroke="#9a7aa2" strokeWidth="1.2" opacity="0.3" />
+                <g className={g('carpetFringeF')}>
+                  <path d={CARPET_FRINGE_F_D} fill="none" stroke={u('carpetTrim')} strokeWidth="1.5" strokeLinecap="round" />
                 </g>
-              </g>
-
-              {/* torso: sway pivots at the shoulders, breathing scales from the hem */}
-              <g className={g('sway')}>
-                <g className={g('breathe')}>
-                  {/* tall standing collar, behind the head */}
-                  <path
-                    d="M22 65C18.8 59 17.9 52.6 18.7 47.4C19 45.2 21.3 44.4 23.2 45.7L33 50.8C36 54.4 41.5 56.4 48 56.4C54.5 56.4 60 54.4 63 50.8L72.8 45.7C74.7 44.4 77 45.2 77.3 47.4C78.1 52.6 77.2 59 74 65C64 69 32 69 22 65Z"
-                    fill={u('collarG')}
-                    strokeWidth="2.1"
-                  />
-                  <path
-                    d="M25.4 64.2C22.6 58.4 21.5 52.8 22.2 48.4C22.4 47 23.8 46.5 24.9 47.2L33.8 51.8C36.9 55.2 42.2 57.1 48 57.1C53.8 57.1 59.1 55.2 62.2 51.8L71.1 47.2C72.2 46.5 73.6 47 73.8 48.4C74.5 52.8 73.4 58.4 70.6 64.2Z"
-                    fill={u('lining')}
-                    strokeWidth="1.2"
-                  />
-                  <path d="M18.3 54.5C18.1 51.4 18.4 48.2 18.7 47.4C19 45.2 21.3 44.4 23.2 45.7L32.6 50.6" fill="none" stroke={u('gold')} strokeWidth="1.9" />
-                  <path d="M77.7 54.5C77.9 51.4 77.6 48.2 77.3 47.4C77 45.2 74.7 44.4 72.8 45.7L63.4 50.6" fill="none" stroke={u('gold')} strokeWidth="1.9" />
-                  <path d="M26.6 50.2C26.6 54.8 27.8 59.4 29.8 63.6" fill="none" stroke="#a98fd0" strokeWidth="1.3" opacity="0.5" />
-                  <path d="M69.4 50.2C69.4 54.8 68.2 59.4 66.2 63.6" fill="none" stroke="#a98fd0" strokeWidth="1.3" opacity="0.5" />
-                  <path d="M23.4 62C20.2 56.4 19.2 50.6 19.8 47" fill="none" stroke="#ffd0a0" strokeWidth="2" opacity="0.6" filter={u('soft')} />
-
-                  {/* coat */}
-                  <path
-                    d="M30 53C26 61 23.5 71 22 80C21.5 84 21 87 21.5 90L26 93L31 85L36 93L41 86L48 84L55 86L60 93L65 85L70 93L74.5 90C75 87 74.5 84 74 80C72.5 71 70 61 66 53Z"
-                    fill={u('coat')}
-                    strokeWidth="2.1"
-                  />
-                  <path d="M31 53C36 60 60 60 65 53L65 50L31 50Z" fill="#2a1a3a" opacity="0.24" stroke="none" filter={u('soft')} />
-                  <path d="M66 54C69 62 71.4 71 72.8 80C73.2 83.4 73.6 86 73.4 88L69 84.8C68.6 81.4 68 77 66.8 72C65.6 66.6 64 60 62 55.6Z" fill="#2a1a3a" opacity="0.2" stroke="none" />
-                  {/* pale lavender lining along the zigzag hem */}
-                  <path
-                    d="M21.5 90L26 93L31 85L36 93L41 86L48 84L55 86L60 93L65 85L70 93L74.5 90L74.5 85.5L70 88.5L65 80.5L60 88.5L55 81.5L48 79.5L41 81.5L36 88.5L31 80.5L26 88.5L21.5 85.5Z"
-                    fill={u('lining')}
-                    strokeWidth="1.3"
-                  />
-                  <path
-                    d="M21.5 85.5L26 88.5L31 80.5L36 88.5L41 81.5L48 79.5L55 81.5L60 88.5L65 80.5L70 88.5L74.5 85.5"
-                    fill="none"
-                    stroke={u('gold')}
-                    strokeWidth="1.7"
-                  />
-                  {/* chest: pale inner robe V */}
-                  <path d="M34.5 53C38 60 45 66 48 71C51 66 58 60 61.5 53Z" fill={u('lining')} strokeWidth="1.5" />
-                  <path d="M34.5 53C38 60 45 66 48 71C51 66 58 60 61.5 53" fill="none" stroke={u('gold')} strokeWidth="2" />
-                  <path d="M37.6 53.8C40.8 59.4 45.8 64.4 48 68.2" fill="none" stroke="#ffffff" strokeWidth="1.4" opacity="0.55" />
-                  <path d="M30.6 55.6C36 51.6 60 51.6 65.4 55.6" fill="none" stroke={u('gold')} strokeWidth="1.7" />
-                  {/* chest clasps */}
-                  <g strokeWidth="1">
-                    <path d="M35.6 56.4L38.4 58L38.4 61L35.6 62.6L32.8 61L32.8 58Z" fill={u('gold')} />
-                    <path d="M60.4 56.4L63.2 58L63.2 61L60.4 62.6L57.6 61L57.6 58Z" fill={u('gold')} />
+                <path d={CARPET_D} fill={u('carpetTop')} stroke="#2a1a3a" strokeWidth="2.1" strokeLinejoin="round" />
+                {/* clipped to the silhouette so no pattern can spill — the same trick the hat
+                    brim already uses. field first, then the border painted over its edges. */}
+                <g clipPath={u('carpetClip')} fill="none">
+                  <rect x="-16" y="99" width="26" height="32" fill={u('carpetBand')} />
+                  <rect x="98" y="104" width="26" height="31" fill={u('carpetBand')} />
+                  <path d="M10 99L10 130M98 104L98 134" stroke={u('carpetTrim')} strokeWidth="1.5" opacity="0.8" />
+                  <path d={CARPET_SPINE_D} stroke={u('carpetTrim')} strokeWidth="0.9" opacity="0.5" />
+                  {/* chunky on purpose: anything with interior detail turns to mud at size 88 */}
+                  <g fill={u('carpetTrim')}>
+                    <path d={carpetDiamond(17, 113.8, 3.2, 2.4)} />
+                    <path d={carpetDiamond(32, 116, 3.2, 2.4)} />
+                    <path d={carpetDiamond(48, 119.7, 4.4, 3)} />
+                    <path d={carpetDiamond(64, 120.6, 3.2, 2.4)} />
+                    <path d={carpetDiamond(81, 120.5, 3.2, 2.4)} />
                   </g>
-                  {/* belt with the hexagonal buckle and its violet gem */}
-                  <path d="M25 66.5C32 71 64 71 71 66.5L71 74.5C64 79 32 79 25 74.5Z" fill="#381e52" strokeWidth="1.7" />
-                  <path d="M25 67.9C32 72.4 64 72.4 71 67.9" fill="none" stroke={u('gold')} strokeWidth="1.3" opacity="0.9" />
-                  <path d="M48 66L55.7 70.4L55.7 79.2L48 83.6L40.3 79.2L40.3 70.4Z" fill={u('gold')} strokeWidth="1.9" />
-                  <path d="M48 70.6L52.1 72.9L52.1 77.5L48 79.8L43.9 77.5L43.9 72.9Z" fill={u('gem')} strokeWidth="1.1" />
-                  <path d="M48 71.7L50.6 73.2L48 74.7L45.4 73.2Z" fill="#f6e6ff" opacity="0.75" stroke="none" />
-                  <path d="M29.4 54.6C26 62.4 23.6 71.6 22.4 80" fill="none" stroke="#ffd0a0" strokeWidth="2" opacity="0.6" filter={u('soft')} />
+                  {/* three centred strokes of the deck path itself. the clip discards the outer
+                      half of each, so widest-first stacks up as gold rim / red band / gold
+                      hairline reading inward, and it hugs the S without a second path. */}
+                  <path d={CARPET_D} stroke={u('carpetTrim')} strokeWidth="5.2" />
+                  <path d={CARPET_D} stroke={u('carpetBand')} strokeWidth="4.2" />
+                  <path d={CARPET_D} stroke={u('carpetTrim')} strokeWidth="1.4" />
+                  <path
+                    d="M-5 110C1 107.2 9 105.8 17 106.5C27 107.2 38 109.9 48 112.8C58 114.3 68 114.6 77 114.3C86 114.3 96 113.7 102 112.3"
+                    stroke="#e6b9ff"
+                    strokeWidth="1.1"
+                    opacity="0.3"
+                  />
                 </g>
               </g>
+            </g>
+          )}
 
-              {/* far arm (the character's right): drawn over the coat, the way the art reads */}
-              <g className={g('armB')}>
-                <g className={g('actArmB')}>
-                  <path d="M64 57C69 63 73.6 70 74.9 76" fill="none" strokeWidth="14.5" />
-                  <path d="M64 57C69 63 73.6 70 74.9 76" fill="none" stroke={u('coatSide')} strokeWidth="11" />
-                  <path d="M74.4 72.8C74.7 74.2 74.9 75.3 75.1 76.6" fill="none" stroke={u('lining')} strokeWidth="11.5" />
-                  <ellipse cx="70.2" cy="77.4" rx="4.1" ry="3.1" transform="rotate(38 70.2 77.4)" fill={u('coatSide')} strokeWidth="1.8" />
-                  <ellipse cx="76.2" cy="83" rx="8.2" ry="7.6" fill={u('coatSide')} strokeWidth="2" />
-                  <path d="M72.8 79.2C72 81.8 72.2 84.6 73.4 87" fill="none" stroke="#3d1a5c" strokeWidth="1.3" opacity="0.4" />
-                  {vignette && <ArmBFx uid={uid} u={u} v={vignette} />}
+          {/* the takeoff lift lives on its own wrapper, outside `body`. body carries an animation
+              in all three states, and an animation cannot be transitioned into — putting the 10
+              units there made him jump onto the carpet in a single frame. here it is a plain
+              declaration, so the .3s ease below actually runs and he rises and settles. */}
+          <g className={g('flyRise')}>
+            <g
+              className={g('body')}
+              stroke="#2a1a3a"
+              strokeLinejoin="round"
+              strokeLinecap="round"
+            >
+              {/* the vignette rig hangs off the feet, so the base cycles keep running underneath */}
+              <g className={g('actRoot')}>
+                {/* legs and boots, tucked under the coat hem */}
+                <g className={g('legB')}>
+                  <g className={g('actLegB')}>
+                    <path d="M40 72L39.6 98" fill="none" stroke={u('trouser')} strokeWidth="11" strokeLinecap="butt" />
+                    <path d="M35 96L45 96L45 107C45 111.4 42.8 113.6 38.6 113.6L32.4 113.6C29.2 113.6 28 111.2 28.9 108.6L32 99.5C32.5 97.2 33.4 96 35 96Z" fill={u('boot')} strokeWidth="2.1" />
+                    <path d="M35 96L45 96L45 100.6L31.55 100.6L32 99.5C32.5 97.2 33.4 96 35 96Z" fill={u('gold')} strokeWidth="1.3" />
+                    <path d="M34.4 101.4C33.6 104 32.9 106.4 32.4 108.6" fill="none" stroke="#a487ac" strokeWidth="1.5" opacity="0.42" />
+                    <path d="M30.6 109.6C32.6 112.2 35.6 113.2 39.4 113" fill="none" stroke="#9a7aa2" strokeWidth="1.3" opacity="0.6" />
+                    <path d="M32.5 97C31.4 101 30.2 105.6 29.7 108.8" fill="none" stroke="#ffd0a0" strokeWidth="2" opacity="0.6" filter={u('soft')} />
+                  </g>
                 </g>
-              </g>
+                <g className={g('legF')}>
+                  <g className={g('actLegF')}>
+                    <path d="M56 72L56.4 98" fill="none" stroke={u('trouser')} strokeWidth="11" strokeLinecap="butt" />
+                    <path d="M61 96L51 96L51 107C51 111.4 53.2 113.6 57.4 113.6L63.6 113.6C66.8 113.6 68 111.2 67.1 108.6L64 99.5C63.5 97.2 62.6 96 61 96Z" fill={u('boot')} strokeWidth="2.1" />
+                    <path d="M61 96L51 96L51 100.6L64.45 100.6L64 99.5C63.5 97.2 62.6 96 61 96Z" fill={u('gold')} strokeWidth="1.3" />
+                    <path d="M65.4 109.6C63.4 112.2 60.4 113.2 56.6 113" fill="none" stroke="#9a7aa2" strokeWidth="1.2" opacity="0.3" />
+                  </g>
+                </g>
 
-              {/* head, face, hair, hat */}
-              <g className={g('head')}>
-                <g className={g('actHead')}>
-                  <ellipse cx="48" cy="33.5" rx="23" ry="20.5" fill={u('skin')} strokeWidth="2.1" />
-                  <path d="M26 30C30 38 38 42 48 42C58 42 66 38 70 30L70 20L26 20Z" fill="#8b3fd4" opacity="0.12" stroke="none" filter={u('soft')} />
-                  <ellipse cx="32.6" cy="44.5" rx="4.6" ry="2.7" fill="#ff7fbb" opacity="0.42" stroke="none" />
-                  <ellipse cx="63.4" cy="44.5" rx="4.6" ry="2.7" fill="#ff7fbb" opacity="0.42" stroke="none" />
-
-                  {/* eyes: the whole group squashes for the blink */}
-                  <g className={g('actEyes')}>
-                    <g className={g('eyes')} stroke="none">
-                      <ellipse cx="38.8" cy="39.5" rx="5.9" ry="7.5" fill="#2a1a3a" />
-                      <ellipse cx="57.2" cy="39.5" rx="5.9" ry="7.5" fill="#2a1a3a" />
-                      <ellipse cx="39.1" cy="40.6" rx="4.4" ry="5.8" fill="#5b32a8" />
-                      <ellipse cx="57.5" cy="40.6" rx="4.4" ry="5.8" fill="#5b32a8" />
-                      <ellipse cx="39.1" cy="42.4" rx="3.3" ry="3.7" fill="#a074ee" />
-                      <ellipse cx="57.5" cy="42.4" rx="3.3" ry="3.7" fill="#a074ee" />
-                      <circle cx="36.7" cy="37" r="2.4" fill="#ffffff" />
-                      <circle cx="55.1" cy="37" r="2.4" fill="#ffffff" />
-                      <circle cx="41" cy="43.4" r="1.2" fill="#ffffff" opacity="0.85" />
-                      <circle cx="59.4" cy="43.4" r="1.2" fill="#ffffff" opacity="0.85" />
+                {/* the flight-only rider parts sit here so the coat, drawn after, overlaps the lap
+                    and the tail roots — the occlusion a seated figure needs. opacity 0 by
+                    attribute, so idle, talk and every vignette leave them invisible. */}
+                <g className={g('flyLegs')} opacity="0">
+                  {/* where the lap disappears under the hem */}
+                  <ellipse cx="48" cy="89" rx="22" ry="6.5" fill="#2a1a3a" opacity="0.34" stroke="none" filter={u('soft')} />
+                  {/* far shin: a straight mirror about x=48, so the pose can never be handed */}
+                  <use href={`#${g('flySeat')}`} transform="translate(96,0) scale(-1,1)" />
+                  {/* near shin, drawn second so the overlap at x=48 reads as the crossing */}
+                  <g id={g('flySeat')}>
+                    <path d="M58.5 83.5C54 87 49 91 45 94.6" fill="none" stroke={u('trouser')} strokeWidth="11" strokeLinecap="butt" />
+                    {/* the standing boot, same path, rotated to the shin's own 52deg — which swings
+                        its toe from pointing along -x to pointing up and outward, the turned-up
+                        foot a cross-legged pose needs. the gold is trimmed from 4.6 to 2.9 units
+                        so it reads as an ankle strap rather than a bar. */}
+                    <g transform="translate(5,-1.4) rotate(52 40 96)">
+                      <path d="M35 96L45 96L45 107C45 111.4 42.8 113.6 38.6 113.6L32.4 113.6C29.2 113.6 28 111.2 28.9 108.6L32 99.5C32.5 97.2 33.4 96 35 96Z" fill={u('boot')} strokeWidth="2.1" />
+                      <path d="M35 96L45 96L45 98.9L31.9 98.9L32 99.5C32.5 97.2 33.4 96 35 96Z" fill={u('gold')} strokeWidth="1.1" />
+                      <path d="M34.4 101.4C33.6 104 32.9 106.4 32.4 108.6" fill="none" stroke="#a487ac" strokeWidth="1.5" opacity="0.42" />
+                      <path d="M30.6 109.6C32.6 112.2 35.6 113.2 39.4 113" fill="none" stroke="#9a7aa2" strokeWidth="1.3" opacity="0.6" />
                     </g>
-                    {/* replacement eyes: identical art, but the vignette can scale and dart them */}
-                    {vignette && (
-                      <g className={g('vfEyes')} stroke="none">
+                  </g>
+                </g>
+
+                {/* the coat being moved through air. two ribbons on different periods so they never
+                    stream in lockstep; their roots sit inside the coat outline at x 26-28, so the
+                    coat drawn after hides where they attach. one-sided by design — "trailing"
+                    follows facing, and facing follows travel, so the flip carries it. */}
+                <g className={g('flyTailB')} opacity="0">
+                  <path d="M26.5 87.6C20 90.4 13.6 94.6 9 99.4C7 101.4 7.6 103.4 10.4 103.2C13.4 100 18.2 97 23.4 95C25.6 94.2 27 93 27 91.4Z" fill={u('coatSide')} strokeWidth="2" />
+                </g>
+                <g className={g('flyTailA')} opacity="0">
+                  <path d="M27 79.5C19 81 11 84.6 4.4 89.6C1.2 92 0.4 94.6 3.4 96.6C6 94 10.4 91.4 15.6 89.4C20.4 87.6 25 86.6 28 86.4Z" fill={u('coat')} strokeWidth="2" />
+                  <path d="M3.4 96.6C6 94 10.4 91.4 15.6 89.4C20.4 87.6 25 86.6 28 86.4" fill="none" stroke={u('gold')} strokeWidth="1.4" />
+                  <path d="M6.2 92.6C10.4 90 15.6 88 21.4 86.8" fill="none" stroke={u('lining')} strokeWidth="1.6" opacity="0.5" />
+                </g>
+
+                {/* torso: sway pivots at the shoulders, breathing scales from the hem */}
+                <g className={g('sway')}>
+                  <g className={g('breathe')}>
+                    {/* tall standing collar, behind the head */}
+                    <path
+                      d="M22 65C18.8 59 17.9 52.6 18.7 47.4C19 45.2 21.3 44.4 23.2 45.7L33 50.8C36 54.4 41.5 56.4 48 56.4C54.5 56.4 60 54.4 63 50.8L72.8 45.7C74.7 44.4 77 45.2 77.3 47.4C78.1 52.6 77.2 59 74 65C64 69 32 69 22 65Z"
+                      fill={u('collarG')}
+                      strokeWidth="2.1"
+                    />
+                    <path
+                      d="M25.4 64.2C22.6 58.4 21.5 52.8 22.2 48.4C22.4 47 23.8 46.5 24.9 47.2L33.8 51.8C36.9 55.2 42.2 57.1 48 57.1C53.8 57.1 59.1 55.2 62.2 51.8L71.1 47.2C72.2 46.5 73.6 47 73.8 48.4C74.5 52.8 73.4 58.4 70.6 64.2Z"
+                      fill={u('lining')}
+                      strokeWidth="1.2"
+                    />
+                    <path d="M18.3 54.5C18.1 51.4 18.4 48.2 18.7 47.4C19 45.2 21.3 44.4 23.2 45.7L32.6 50.6" fill="none" stroke={u('gold')} strokeWidth="1.9" />
+                    <path d="M77.7 54.5C77.9 51.4 77.6 48.2 77.3 47.4C77 45.2 74.7 44.4 72.8 45.7L63.4 50.6" fill="none" stroke={u('gold')} strokeWidth="1.9" />
+                    <path d="M26.6 50.2C26.6 54.8 27.8 59.4 29.8 63.6" fill="none" stroke="#a98fd0" strokeWidth="1.3" opacity="0.5" />
+                    <path d="M69.4 50.2C69.4 54.8 68.2 59.4 66.2 63.6" fill="none" stroke="#a98fd0" strokeWidth="1.3" opacity="0.5" />
+                    <path d="M23.4 62C20.2 56.4 19.2 50.6 19.8 47" fill="none" stroke="#ffd0a0" strokeWidth="2" opacity="0.6" filter={u('soft')} />
+
+                    {/* coat */}
+                    <path
+                      d="M30 53C26 61 23.5 71 22 80C21.5 84 21 87 21.5 90L26 93L31 85L36 93L41 86L48 84L55 86L60 93L65 85L70 93L74.5 90C75 87 74.5 84 74 80C72.5 71 70 61 66 53Z"
+                      fill={u('coat')}
+                      strokeWidth="2.1"
+                    />
+                    <path d="M31 53C36 60 60 60 65 53L65 50L31 50Z" fill="#2a1a3a" opacity="0.24" stroke="none" filter={u('soft')} />
+                    <path d="M66 54C69 62 71.4 71 72.8 80C73.2 83.4 73.6 86 73.4 88L69 84.8C68.6 81.4 68 77 66.8 72C65.6 66.6 64 60 62 55.6Z" fill="#2a1a3a" opacity="0.2" stroke="none" />
+                    {/* pale lavender lining along the zigzag hem */}
+                    <path
+                      d="M21.5 90L26 93L31 85L36 93L41 86L48 84L55 86L60 93L65 85L70 93L74.5 90L74.5 85.5L70 88.5L65 80.5L60 88.5L55 81.5L48 79.5L41 81.5L36 88.5L31 80.5L26 88.5L21.5 85.5Z"
+                      fill={u('lining')}
+                      strokeWidth="1.3"
+                    />
+                    <path
+                      d="M21.5 85.5L26 88.5L31 80.5L36 88.5L41 81.5L48 79.5L55 81.5L60 88.5L65 80.5L70 88.5L74.5 85.5"
+                      fill="none"
+                      stroke={u('gold')}
+                      strokeWidth="1.7"
+                    />
+                    {/* chest: pale inner robe V */}
+                    <path d="M34.5 53C38 60 45 66 48 71C51 66 58 60 61.5 53Z" fill={u('lining')} strokeWidth="1.5" />
+                    <path d="M34.5 53C38 60 45 66 48 71C51 66 58 60 61.5 53" fill="none" stroke={u('gold')} strokeWidth="2" />
+                    <path d="M37.6 53.8C40.8 59.4 45.8 64.4 48 68.2" fill="none" stroke="#ffffff" strokeWidth="1.4" opacity="0.55" />
+                    <path d="M30.6 55.6C36 51.6 60 51.6 65.4 55.6" fill="none" stroke={u('gold')} strokeWidth="1.7" />
+                    {/* chest clasps */}
+                    <g strokeWidth="1">
+                      <path d="M35.6 56.4L38.4 58L38.4 61L35.6 62.6L32.8 61L32.8 58Z" fill={u('gold')} />
+                      <path d="M60.4 56.4L63.2 58L63.2 61L60.4 62.6L57.6 61L57.6 58Z" fill={u('gold')} />
+                    </g>
+                    {/* belt with the hexagonal buckle and its violet gem */}
+                    <path d="M25 66.5C32 71 64 71 71 66.5L71 74.5C64 79 32 79 25 74.5Z" fill="#381e52" strokeWidth="1.7" />
+                    <path d="M25 67.9C32 72.4 64 72.4 71 67.9" fill="none" stroke={u('gold')} strokeWidth="1.3" opacity="0.9" />
+                    <path d="M48 66L55.7 70.4L55.7 79.2L48 83.6L40.3 79.2L40.3 70.4Z" fill={u('gold')} strokeWidth="1.9" />
+                    <path d="M48 70.6L52.1 72.9L52.1 77.5L48 79.8L43.9 77.5L43.9 72.9Z" fill={u('gem')} strokeWidth="1.1" />
+                    <path d="M48 71.7L50.6 73.2L48 74.7L45.4 73.2Z" fill="#f6e6ff" opacity="0.75" stroke="none" />
+                    <path d="M29.4 54.6C26 62.4 23.6 71.6 22.4 80" fill="none" stroke="#ffd0a0" strokeWidth="2" opacity="0.6" filter={u('soft')} />
+                  </g>
+                </g>
+
+                {/* far arm (the character's right): drawn over the coat, the way the art reads */}
+                <g className={g('armB')}>
+                  <g className={g('actArmB')}>
+                    <path d="M64 57C69 63 73.6 70 74.9 76" fill="none" strokeWidth="14.5" />
+                    <path d="M64 57C69 63 73.6 70 74.9 76" fill="none" stroke={u('coatSide')} strokeWidth="11" />
+                    <path d="M74.4 72.8C74.7 74.2 74.9 75.3 75.1 76.6" fill="none" stroke={u('lining')} strokeWidth="11.5" />
+                    <ellipse cx="70.2" cy="77.4" rx="4.1" ry="3.1" transform="rotate(38 70.2 77.4)" fill={u('coatSide')} strokeWidth="1.8" />
+                    <ellipse cx="76.2" cy="83" rx="8.2" ry="7.6" fill={u('coatSide')} strokeWidth="2" />
+                    <path d="M72.8 79.2C72 81.8 72.2 84.6 73.4 87" fill="none" stroke="#3d1a5c" strokeWidth="1.3" opacity="0.4" />
+                    {vignette && <ArmBFx uid={uid} u={u} v={vignette} />}
+                  </g>
+                </g>
+
+                {/* head, face, hair, hat */}
+                <g className={g('head')}>
+                  <g className={g('actHead')}>
+                    <ellipse cx="48" cy="33.5" rx="23" ry="20.5" fill={u('skin')} strokeWidth="2.1" />
+                    <path d="M26 30C30 38 38 42 48 42C58 42 66 38 70 30L70 20L26 20Z" fill="#8b3fd4" opacity="0.12" stroke="none" filter={u('soft')} />
+                    <ellipse cx="32.6" cy="44.5" rx="4.6" ry="2.7" fill="#ff7fbb" opacity="0.42" stroke="none" />
+                    <ellipse cx="63.4" cy="44.5" rx="4.6" ry="2.7" fill="#ff7fbb" opacity="0.42" stroke="none" />
+
+                    {/* eyes: the whole group squashes for the blink */}
+                    <g className={g('actEyes')}>
+                      <g className={g('eyes')} stroke="none">
                         <ellipse cx="38.8" cy="39.5" rx="5.9" ry="7.5" fill="#2a1a3a" />
                         <ellipse cx="57.2" cy="39.5" rx="5.9" ry="7.5" fill="#2a1a3a" />
-                        <g className={g('vfPupils')}>
-                          <ellipse cx="39.1" cy="40.6" rx="4.4" ry="5.8" fill="#5b32a8" />
-                          <ellipse cx="57.5" cy="40.6" rx="4.4" ry="5.8" fill="#5b32a8" />
-                          <ellipse cx="39.1" cy="42.4" rx="3.3" ry="3.7" fill="#a074ee" />
-                          <ellipse cx="57.5" cy="42.4" rx="3.3" ry="3.7" fill="#a074ee" />
-                          <circle cx="36.7" cy="37" r="2.4" fill="#ffffff" />
-                          <circle cx="55.1" cy="37" r="2.4" fill="#ffffff" />
-                          <circle cx="41" cy="43.4" r="1.2" fill="#ffffff" opacity="0.85" />
-                          <circle cx="59.4" cy="43.4" r="1.2" fill="#ffffff" opacity="0.85" />
+                        <ellipse cx="39.1" cy="40.6" rx="4.4" ry="5.8" fill="#5b32a8" />
+                        <ellipse cx="57.5" cy="40.6" rx="4.4" ry="5.8" fill="#5b32a8" />
+                        <ellipse cx="39.1" cy="42.4" rx="3.3" ry="3.7" fill="#a074ee" />
+                        <ellipse cx="57.5" cy="42.4" rx="3.3" ry="3.7" fill="#a074ee" />
+                        <circle cx="36.7" cy="37" r="2.4" fill="#ffffff" />
+                        <circle cx="55.1" cy="37" r="2.4" fill="#ffffff" />
+                        <circle cx="41" cy="43.4" r="1.2" fill="#ffffff" opacity="0.85" />
+                        <circle cx="59.4" cy="43.4" r="1.2" fill="#ffffff" opacity="0.85" />
+                      </g>
+                      {/* replacement eyes: identical art, but the vignette can scale and dart them */}
+                      {vignette && (
+                        <g className={g('vfEyes')} stroke="none">
+                          <ellipse cx="38.8" cy="39.5" rx="5.9" ry="7.5" fill="#2a1a3a" />
+                          <ellipse cx="57.2" cy="39.5" rx="5.9" ry="7.5" fill="#2a1a3a" />
+                          <g className={g('vfPupils')}>
+                            <ellipse cx="39.1" cy="40.6" rx="4.4" ry="5.8" fill="#5b32a8" />
+                            <ellipse cx="57.5" cy="40.6" rx="4.4" ry="5.8" fill="#5b32a8" />
+                            <ellipse cx="39.1" cy="42.4" rx="3.3" ry="3.7" fill="#a074ee" />
+                            <ellipse cx="57.5" cy="42.4" rx="3.3" ry="3.7" fill="#a074ee" />
+                            <circle cx="36.7" cy="37" r="2.4" fill="#ffffff" />
+                            <circle cx="55.1" cy="37" r="2.4" fill="#ffffff" />
+                            <circle cx="41" cy="43.4" r="1.2" fill="#ffffff" opacity="0.85" />
+                            <circle cx="59.4" cy="43.4" r="1.2" fill="#ffffff" opacity="0.85" />
+                          </g>
+                        </g>
+                      )}
+                    </g>
+
+                    <path className={g('mouth')} d="M44.6 47.7C46.4 51 50.2 51.2 52.2 47.3" fill="none" stroke="#7b3450" strokeWidth="2.1" />
+
+                    {/* hair: the crown tucks under the brim, the lock sweeps right */}
+                    <path
+                      d="M25.8 36C24.5 30.2 25.4 24 30.2 20.4C35.8 16.2 43 14.8 49.4 15.4C56 16 61.6 18.2 65.6 21.8C68.6 24.4 70 26.2 70.4 28.2C75.6 27.2 80.8 26.2 84 23.6C85.4 22.4 86.4 21.6 87.2 20.8C86 22.8 84.8 24.6 83 26.2C79.6 29.4 75.2 31.4 71.2 32.6C71.4 34 71.2 35.2 71 36.4L66 45L64.6 25.4L57.5 33L53 26L47.5 38.4L41 26L36.5 32.6L33 25.2L30 45Z"
+                      fill={u('hair')}
+                      strokeWidth="2.1"
+                    />
+                    <path d="M31.4 33.8C31.8 30.8 33.2 28.6 35.6 27.2" fill="none" stroke="#f0cfff" strokeWidth="2.4" opacity="0.5" filter={u('soft')} />
+                    <path d="M73.4 28.8C77.4 28 81 27 84.2 24.4" fill="none" stroke="#f6dcff" strokeWidth="1.9" opacity="0.62" filter={u('soft')} />
+                    <path d="M72.6 31.4C76.2 30.6 79.6 29.2 82.2 27" fill="none" stroke="#4a1d7a" strokeWidth="1.2" opacity="0.45" />
+
+                    {/* the brim casts down over the forehead */}
+                    <path d="M28.5 24C33.5 29.6 40 32 48 32C56 32 62.5 29.6 67.5 24L67.5 19L28.5 19Z" fill="#2a1a3a" opacity="0.24" stroke="none" filter={u('soft')} />
+
+                    {/* blink lids and the open mouth ride over the finished face */}
+                    <g className={g('lids')} fill="none" strokeWidth="2.6">
+                      <path d="M33.4 39C35.8 42.4 41.8 42.4 44.2 39" />
+                      <path d="M51.8 39C54.2 42.4 60.2 42.4 62.6 39" />
+                    </g>
+                    <g className={g('mouthopen')} stroke="#7b3450">
+                      <ellipse cx="48.4" cy="49.8" rx="4.4" ry="3.2" fill="#5c2338" strokeWidth="1.8" />
+                      <ellipse cx="48.4" cy="51.5" rx="2.5" ry="1.2" fill="#e07a72" stroke="none" />
+                    </g>
+                    {/* brows read through the fringe, the way anime draws them */}
+                    <g className={g('brows')} fill="none" stroke="#3f1f66" strokeWidth="2.2" opacity="0.92">
+                      <path d="M33.8 31.6C36.6 28.8 41.2 28.4 44.6 30.4" />
+                      <path d="M51.4 30.4C54.8 28.4 59.4 28.8 62.2 31.6" />
+                    </g>
+                    <path d="M26.8 34C26.2 30.6 27.2 27.6 29.6 25.4" fill="none" stroke="#ffd0a0" strokeWidth="2" opacity="0.6" filter={u('soft')} />
+
+                    {/* the replacement face: one rig, five vignettes, opacity-toggled variants */}
+                    {vignette && (
+                      <>
+                        <g className={g('vfLids')} fill="none" strokeWidth="2.6">
+                          <path d="M33.4 39C35.8 42.4 41.8 42.4 44.2 39" />
+                          <path d="M51.8 39C54.2 42.4 60.2 42.4 62.6 39" />
+                        </g>
+                        <g className={g('vfBrows')} fill="none" stroke="#3f1f66" strokeWidth="2.2" opacity="0.92">
+                          <path d="M33.8 31.6C36.6 28.8 41.2 28.4 44.6 30.4" />
+                          <path className={g('vfBrowR')} d="M51.4 30.4C54.8 28.4 59.4 28.8 62.2 31.6" />
+                        </g>
+                        <path
+                          className={g('vfMouth')}
+                          d="M44.6 47.7C46.4 51 50.2 51.2 52.2 47.3"
+                          fill="none"
+                          stroke="#7b3450"
+                          strokeWidth="2.1"
+                        />
+                        <g className={g('vfMouthO')} opacity="0" stroke="#7b3450">
+                          <ellipse cx="48.4" cy="49.8" rx="3.2" ry="2.9" fill="#5c2338" strokeWidth="1.8" />
+                          <ellipse cx="48.4" cy="51" rx="1.8" ry="0.9" fill="#e07a72" stroke="none" />
+                        </g>
+                        <g className={g('vfMouthBig')} opacity="0" stroke="#7b3450">
+                          <ellipse cx="48.4" cy="50" rx="5.4" ry="4.4" fill="#5c2338" strokeWidth="1.9" />
+                          <ellipse cx="48.4" cy="52.4" rx="2.8" ry="1.4" fill="#e07a72" stroke="none" />
+                        </g>
+                        <path
+                          className={g('vfSmile')}
+                          opacity="0"
+                          d="M42.6 46.6C45.4 53.6 51.8 53.6 54.4 46.4C50.4 48.8 46.4 48.8 42.6 46.6Z"
+                          fill="#5c2338"
+                          strokeWidth="1.9"
+                        />
+                        <HeadFx uid={uid} u={u} v={vignette} />
+                      </>
+                    )}
+
+                    {/* pointed wizard hat: one rig unit pivoting on 48,21 where it sits on the head.
+                        hatHide wraps hatArt so the <use> clone in the vfx layer is never hidden with it */}
+                    <g className={g('hatHide')}>
+                      <g id={g('hatArt')}>
+                        <g className={g('cone')}>
+                          <g className={g('actCone')}>
+                            {/* brim, behind the cone */}
+                            <path d={HAT_BRIM_D} fill={u('hatBrimG')} strokeWidth="2.1" />
+                            <g clipPath={u('hatBrimClip')}>
+                              <path d="M34.6 18.6C40.8 23.4 53 23.6 59.4 18.8C62 22 66 24.6 70 26.4L70 29L27 29L27 26C30.6 23.8 33 21.4 34.6 18.6Z" fill="#2a1a3a" opacity="0.26" stroke="none" filter={u('soft')} />
+                              <path d="M22.6 21.6C24.6 17.6 30.8 14.6 39.4 13.6" fill="none" stroke="#f5c8ff" strokeWidth="1.8" opacity="0.45" filter={u('soft')} />
+                            </g>
+                            {/* cone with a soft fold near the tip */}
+                            <path d={HAT_CONE_D} fill={u('hatConeG')} strokeWidth="2.1" />
+                            <g clipPath={u('hatConeClip')}>
+                              <path d="M48 1.2C53 0.8 57.4 2.4 60 5.4C58.4 7.8 55.4 9.2 52.6 9.8C50.8 10.2 49.8 11.2 50.2 12.8C51.2 16.4 54.2 19.4 59 22.4L62 24.4L62 0Z" fill="#2a1a3a" opacity="0.17" stroke="none" />
+                              <path d="M59.4 5.2C58 7.2 55.6 8.6 52.8 9.2C51.4 9.5 50.6 10.2 50.9 11.4C46.6 11.8 42.2 13.4 38.6 16.4C42.4 10.8 49.6 7.2 59.4 5.2Z" fill="#2a1a3a" opacity="0.32" stroke="none" filter={u('soft')} />
+                              <path d="M38.6 18.4C37.8 13.6 38.8 9.2 41.6 5.6" fill="none" stroke="#f5b8ff" strokeWidth="2.6" opacity="0.5" filter={u('soft')} />
+                              {/* pale lavender band where the cone meets the brim */}
+                              <path d="M36.5 15.1C40.6 17.2 47.6 17.8 52.6 15.5C53.6 17.4 55.4 18.9 57.5 20C51.6 22.6 42.4 22.4 36.6 19.8C36.4 18.2 36.4 16.6 36.5 15.1Z" fill={u('lining')} stroke="none" />
+                              <path d="M36.5 15.1C40.6 17.2 47.6 17.8 52.6 15.5" fill="none" stroke={u('gold')} strokeWidth="1.6" />
+                              <path d="M38.4 18.4C42.6 20 47.6 20.4 52 19.6" fill="none" stroke="#ffffff" strokeWidth="1.1" opacity="0.5" />
+                            </g>
+                            {/* crisp silhouette back on top of the band */}
+                            <path d={HAT_CONE_D} fill="none" strokeWidth="2.1" />
+                            {/* gold star at the folded tip */}
+                            <g className={g('star')}>
+                              <circle cx="61.6" cy="4.9" r="8.6" fill={u('hatStarGlow')} stroke="none" />
+                              <path
+                                d="M61.6 0.3L63.07 2.88L65.98 3.48L63.98 5.67L64.3 8.62L61.6 7.4L58.9 8.62L59.22 5.67L57.22 3.48L60.13 2.88Z"
+                                fill={u('hatStarG')}
+                                strokeWidth="0.95"
+                              />
+                              <circle cx="61.6" cy="4.7" r="1.55" fill="#fff4c8" opacity="0.92" stroke="none" />
+                            </g>
+                          </g>
                         </g>
                       </g>
-                    )}
+                    </g>
                   </g>
+                </g>
 
-                  <path className={g('mouth')} d="M44.6 47.7C46.4 51 50.2 51.2 52.2 47.3" fill="none" stroke="#7b3450" strokeWidth="2.1" />
-
-                  {/* hair: the crown tucks under the brim, the lock sweeps right */}
-                  <path
-                    d="M25.8 36C24.5 30.2 25.4 24 30.2 20.4C35.8 16.2 43 14.8 49.4 15.4C56 16 61.6 18.2 65.6 21.8C68.6 24.4 70 26.2 70.4 28.2C75.6 27.2 80.8 26.2 84 23.6C85.4 22.4 86.4 21.6 87.2 20.8C86 22.8 84.8 24.6 83 26.2C79.6 29.4 75.2 31.4 71.2 32.6C71.4 34 71.2 35.2 71 36.4L66 45L64.6 25.4L57.5 33L53 26L47.5 38.4L41 26L36.5 32.6L33 25.2L30 45Z"
-                    fill={u('hair')}
-                    strokeWidth="2.1"
-                  />
-                  <path d="M31.4 33.8C31.8 30.8 33.2 28.6 35.6 27.2" fill="none" stroke="#f0cfff" strokeWidth="2.4" opacity="0.5" filter={u('soft')} />
-                  <path d="M73.4 28.8C77.4 28 81 27 84.2 24.4" fill="none" stroke="#f6dcff" strokeWidth="1.9" opacity="0.62" filter={u('soft')} />
-                  <path d="M72.6 31.4C76.2 30.6 79.6 29.2 82.2 27" fill="none" stroke="#4a1d7a" strokeWidth="1.2" opacity="0.45" />
-
-                  {/* the brim casts down over the forehead */}
-                  <path d="M28.5 24C33.5 29.6 40 32 48 32C56 32 62.5 29.6 67.5 24L67.5 19L28.5 19Z" fill="#2a1a3a" opacity="0.24" stroke="none" filter={u('soft')} />
-
-                  {/* blink lids and the open mouth ride over the finished face */}
-                  <g className={g('lids')} fill="none" strokeWidth="2.6">
-                    <path d="M33.4 39C35.8 42.4 41.8 42.4 44.2 39" />
-                    <path d="M51.8 39C54.2 42.4 60.2 42.4 62.6 39" />
-                  </g>
-                  <g className={g('mouthopen')} stroke="#7b3450">
-                    <ellipse cx="48.4" cy="49.8" rx="4.4" ry="3.2" fill="#5c2338" strokeWidth="1.8" />
-                    <ellipse cx="48.4" cy="51.5" rx="2.5" ry="1.2" fill="#e07a72" stroke="none" />
-                  </g>
-                  {/* brows read through the fringe, the way anime draws them */}
-                  <g className={g('brows')} fill="none" stroke="#3f1f66" strokeWidth="2.2" opacity="0.92">
-                    <path d="M33.8 31.6C36.6 28.8 41.2 28.4 44.6 30.4" />
-                    <path d="M51.4 30.4C54.8 28.4 59.4 28.8 62.2 31.6" />
-                  </g>
-                  <path d="M26.8 34C26.2 30.6 27.2 27.6 29.6 25.4" fill="none" stroke="#ffd0a0" strokeWidth="2" opacity="0.6" filter={u('soft')} />
-
-                  {/* the replacement face: one rig, five vignettes, opacity-toggled variants */}
-                  {vignette && (
-                    <>
-                      <g className={g('vfLids')} fill="none" strokeWidth="2.6">
-                        <path d="M33.4 39C35.8 42.4 41.8 42.4 44.2 39" />
-                        <path d="M51.8 39C54.2 42.4 60.2 42.4 62.6 39" />
+                {/* near arm (the character's left) with the amber crystal staff */}
+                <g className={g('armF')}>
+                  <g className={g('actArmF')}>
+                    {/* actStaff wraps only the staff itself, so the sleeve stays welded to the arm.
+                        flyStaff goes around it, never inside: at rest the butt is on the ground at
+                        y=113, so once he lifts it would hang through the deck. 9 units is chosen so
+                        the upper gold band slides under the crystal collar and the lower one
+                        emerges just below the mitten as a ferrule; the hand never appears to move
+                        because the mitten is painted over the shaft. */}
+                    <g className={g('flyStaff')}>
+                      <g className={g('actStaff')}>
+                        {vignette && <StaffFx uid={uid} u={u} v={vignette} />}
+                        <g className={g('glow')} stroke="none">
+                          <ellipse cx="9" cy="15" rx="20" ry="20" fill={u('amberGlow')} />
+                        </g>
+                        <path d="M6.1 26L9.9 26L19.4 113L15.6 113Z" fill={u('staffWood')} strokeWidth="1.6" />
+                        <path d="M7 28L16.4 113" fill="none" stroke="#c7a8dd" strokeWidth="0.9" opacity="0.45" />
+                        <path d="M6.9 35L10.7 35L11.1 39L7.3 39Z" fill={u('gold')} strokeWidth="1" />
+                        <path d="M14.2 100L18 100L18.4 104L14.6 104Z" fill={u('gold')} strokeWidth="1" />
+                        <path d="M3.6 27.5L14.2 27.5L12.6 21L5.2 21Z" fill={u('gold')} strokeWidth="1.5" />
+                        <path d="M9 3.5L16.6 14L9 24.5L1.4 14Z" fill={u('amber')} strokeWidth="1.6" />
+                        <path d="M9 3.5L9 24.5M1.4 14L16.6 14" fill="none" stroke="#ffeec4" strokeWidth="0.7" opacity="0.6" />
+                        <path d="M9 6.5L13.8 13.6L9 12.4Z" fill="#fffbe8" opacity="0.8" stroke="none" />
                       </g>
-                      <g className={g('vfBrows')} fill="none" stroke="#3f1f66" strokeWidth="2.2" opacity="0.92">
-                        <path d="M33.8 31.6C36.6 28.8 41.2 28.4 44.6 30.4" />
-                        <path className={g('vfBrowR')} d="M51.4 30.4C54.8 28.4 59.4 28.8 62.2 31.6" />
-                      </g>
-                      <path
-                        className={g('vfMouth')}
-                        d="M44.6 47.7C46.4 51 50.2 51.2 52.2 47.3"
-                        fill="none"
-                        stroke="#7b3450"
-                        strokeWidth="2.1"
-                      />
-                      <g className={g('vfMouthO')} opacity="0" stroke="#7b3450">
-                        <ellipse cx="48.4" cy="49.8" rx="3.2" ry="2.9" fill="#5c2338" strokeWidth="1.8" />
-                        <ellipse cx="48.4" cy="51" rx="1.8" ry="0.9" fill="#e07a72" stroke="none" />
-                      </g>
-                      <g className={g('vfMouthBig')} opacity="0" stroke="#7b3450">
-                        <ellipse cx="48.4" cy="50" rx="5.4" ry="4.4" fill="#5c2338" strokeWidth="1.9" />
-                        <ellipse cx="48.4" cy="52.4" rx="2.8" ry="1.4" fill="#e07a72" stroke="none" />
+                    </g>
+                    <path d="M32 57C27 62 22 68 19.6 74" fill="none" strokeWidth="14.5" />
+                    <path d="M32 57C27 62 22 68 19.6 74" fill="none" stroke={u('coatSide')} strokeWidth="11" />
+                    <path d="M20.8 70.8C20.2 72 19.8 73.1 19.5 74.4" fill="none" stroke={u('lining')} strokeWidth="11.5" />
+                    <ellipse cx="21.6" cy="76.2" rx="4.1" ry="3.1" transform="rotate(-38 21.6 76.2)" fill={u('coatSide')} strokeWidth="1.8" />
+                    {/* oversized mitten wrapped around the shaft */}
+                    <ellipse cx="15.4" cy="81.8" rx="8.2" ry="7.6" fill={u('coatSide')} strokeWidth="2" />
+                    <path d="M18.8 78C19.6 80.6 19.4 83.4 18.2 85.8" fill="none" stroke="#3d1a5c" strokeWidth="1.3" opacity="0.45" />
+                    <path d="M9.4 79C10.8 75.4 14.4 73.6 17.8 74.8" fill="none" stroke="#eab9ff" strokeWidth="1.6" opacity="0.6" />
+                    <path d="M8.8 78.2C10.4 76 13 74.8 15.8 74.7" fill="none" stroke="#ffd0a0" strokeWidth="1.5" opacity="0.42" />
+                  </g>
+                </g>
+
+                {/* floating spellbook: its own actor, so the next phase can fly it anywhere */}
+                <g className={g('book')}>
+                  <g className={g('actBook')}>
+                    <g transform="rotate(-7 82.5 55)">
+                      <ellipse cx="82.5" cy="55" rx="21" ry="17" fill={u('bookGlow')} stroke="none" />
+                      <g className={g('pages')}>
+                        <path d="M73.5 46.5L95.5 46.5C96.1 53 96.1 60 95.5 66.5L73.5 66.5Z" fill={u('page')} strokeWidth="1.4" />
+                        <path d="M93.7 47.7C94.3 53.6 94.3 59.6 93.7 65.4M91.7 47.5C92.3 53.6 92.3 59.6 91.7 65.6" fill="none" stroke="#b39a68" strokeWidth="0.8" opacity="0.85" />
                       </g>
                       <path
-                        className={g('vfSmile')}
-                        opacity="0"
-                        d="M42.6 46.6C45.4 53.6 51.8 53.6 54.4 46.4C50.4 48.8 46.4 48.8 42.6 46.6Z"
-                        fill="#5c2338"
+                        d="M73 44L92 44C93.5 44 94.2 44.8 94.2 46.2L94.2 63.8C94.2 65.2 93.5 66 92 66L73 66C71.5 66 70.8 65.2 70.8 63.8L70.8 46.2C70.8 44.8 71.5 44 73 44Z"
+                        fill={u('leather')}
                         strokeWidth="1.9"
                       />
-                      <HeadFx uid={uid} u={u} v={vignette} />
-                    </>
-                  )}
-
-                  {/* pointed wizard hat: one rig unit pivoting on 48,21 where it sits on the head.
-                      hatHide wraps hatArt so the <use> clone in the vfx layer is never hidden with it */}
-                  <g className={g('hatHide')}>
-                    <g id={g('hatArt')}>
-                      <g className={g('cone')}>
-                        <g className={g('actCone')}>
-                          {/* brim, behind the cone */}
-                          <path d={HAT_BRIM_D} fill={u('hatBrimG')} strokeWidth="2.1" />
-                          <g clipPath={u('hatBrimClip')}>
-                            <path d="M34.6 18.6C40.8 23.4 53 23.6 59.4 18.8C62 22 66 24.6 70 26.4L70 29L27 29L27 26C30.6 23.8 33 21.4 34.6 18.6Z" fill="#2a1a3a" opacity="0.26" stroke="none" filter={u('soft')} />
-                            <path d="M22.6 21.6C24.6 17.6 30.8 14.6 39.4 13.6" fill="none" stroke="#f5c8ff" strokeWidth="1.8" opacity="0.45" filter={u('soft')} />
-                          </g>
-                          {/* cone with a soft fold near the tip */}
-                          <path d={HAT_CONE_D} fill={u('hatConeG')} strokeWidth="2.1" />
-                          <g clipPath={u('hatConeClip')}>
-                            <path d="M48 1.2C53 0.8 57.4 2.4 60 5.4C58.4 7.8 55.4 9.2 52.6 9.8C50.8 10.2 49.8 11.2 50.2 12.8C51.2 16.4 54.2 19.4 59 22.4L62 24.4L62 0Z" fill="#2a1a3a" opacity="0.17" stroke="none" />
-                            <path d="M59.4 5.2C58 7.2 55.6 8.6 52.8 9.2C51.4 9.5 50.6 10.2 50.9 11.4C46.6 11.8 42.2 13.4 38.6 16.4C42.4 10.8 49.6 7.2 59.4 5.2Z" fill="#2a1a3a" opacity="0.32" stroke="none" filter={u('soft')} />
-                            <path d="M38.6 18.4C37.8 13.6 38.8 9.2 41.6 5.6" fill="none" stroke="#f5b8ff" strokeWidth="2.6" opacity="0.5" filter={u('soft')} />
-                            {/* pale lavender band where the cone meets the brim */}
-                            <path d="M36.5 15.1C40.6 17.2 47.6 17.8 52.6 15.5C53.6 17.4 55.4 18.9 57.5 20C51.6 22.6 42.4 22.4 36.6 19.8C36.4 18.2 36.4 16.6 36.5 15.1Z" fill={u('lining')} stroke="none" />
-                            <path d="M36.5 15.1C40.6 17.2 47.6 17.8 52.6 15.5" fill="none" stroke={u('gold')} strokeWidth="1.6" />
-                            <path d="M38.4 18.4C42.6 20 47.6 20.4 52 19.6" fill="none" stroke="#ffffff" strokeWidth="1.1" opacity="0.5" />
-                          </g>
-                          {/* crisp silhouette back on top of the band */}
-                          <path d={HAT_CONE_D} fill="none" strokeWidth="2.1" />
-                          {/* gold star at the folded tip */}
-                          <g className={g('star')}>
-                            <circle cx="61.6" cy="4.9" r="8.6" fill={u('hatStarGlow')} stroke="none" />
-                            <path
-                              d="M61.6 0.3L63.07 2.88L65.98 3.48L63.98 5.67L64.3 8.62L61.6 7.4L58.9 8.62L59.22 5.67L57.22 3.48L60.13 2.88Z"
-                              fill={u('hatStarG')}
-                              strokeWidth="0.95"
-                            />
-                            <circle cx="61.6" cy="4.7" r="1.55" fill="#fff4c8" opacity="0.92" stroke="none" />
-                          </g>
-                        </g>
+                      <path d="M74.6 44L78.2 44L78.2 66L74.6 66Z" fill="#4d2513" opacity="0.6" stroke="none" />
+                      {/* gold corner caps */}
+                      <g fill={u('gold')} strokeWidth="1.2">
+                        <path d="M73 44L79.4 44L73 50.4C71.5 50.4 70.8 49.6 70.8 48.2L70.8 46.2C70.8 44.8 71.5 44 73 44Z" />
+                        <path d="M92 44L85.6 44L92 50.4C93.5 50.4 94.2 49.6 94.2 48.2L94.2 46.2C94.2 44.8 93.5 44 92 44Z" />
+                        <path d="M73 66L79.4 66L73 59.6C71.5 59.6 70.8 60.4 70.8 61.8L70.8 63.8C70.8 65.2 71.5 66 73 66Z" />
+                        <path d="M92 66L85.6 66L92 59.6C93.5 59.6 94.2 60.4 94.2 61.8L94.2 63.8C94.2 65.2 93.5 66 92 66Z" />
                       </g>
+                      {/* gold hex emblem with a violet gem */}
+                      <path d="M83.3 47.6L89.1 51L89.1 57.8L83.3 61.2L77.5 57.8L77.5 51Z" fill={u('gold')} strokeWidth="1.7" />
+                      <path d="M83.3 51L86.2 52.7L86.2 56.1L83.3 57.8L80.4 56.1L80.4 52.7Z" fill={u('gem')} strokeWidth="1.1" />
+                      <path d="M83.3 52L85.3 53.2L83.3 54.4L81.3 53.2Z" fill="#f6e6ff" opacity="0.75" stroke="none" />
+                      <path d="M72.2 45.2L91.1 45.2" fill="none" stroke="#ffd8a8" strokeWidth="1.1" opacity="0.5" />
+                      <ellipse cx="82" cy="71" rx="12" ry="2.6" fill="#1c0d2b" opacity="0.22" stroke="none" />
                     </g>
-                  </g>
-                </g>
-              </g>
-
-              {/* near arm (the character's left) with the amber crystal staff */}
-              <g className={g('armF')}>
-                <g className={g('actArmF')}>
-                  {/* actStaff wraps only the staff itself, so the sleeve stays welded to the arm */}
-                  <g className={g('actStaff')}>
-                    {vignette && <StaffFx uid={uid} u={u} v={vignette} />}
-                    <g className={g('glow')} stroke="none">
-                      <ellipse cx="9" cy="15" rx="20" ry="20" fill={u('amberGlow')} />
+                    <g fill="#e0aeff" stroke="none">
+                      <path d="M94 34L94.9 36.4L97.3 37.3L94.9 38.2L94 40.6L93.1 38.2L90.7 37.3L93.1 36.4Z" opacity="0.7" />
+                      <path d="M69 70L69.7 71.7L71.4 72.4L69.7 73.1L69 74.8L68.3 73.1L66.6 72.4L68.3 71.7Z" opacity="0.45" />
+                      <path d="M96.5 64L97 65.3L98.3 65.8L97 66.3L96.5 67.6L96 66.3L94.7 65.8L96 65.3Z" opacity="0.55" />
                     </g>
-                    <path d="M6.1 26L9.9 26L19.4 113L15.6 113Z" fill={u('staffWood')} strokeWidth="1.6" />
-                    <path d="M7 28L16.4 113" fill="none" stroke="#c7a8dd" strokeWidth="0.9" opacity="0.45" />
-                    <path d="M6.9 35L10.7 35L11.1 39L7.3 39Z" fill={u('gold')} strokeWidth="1" />
-                    <path d="M14.2 100L18 100L18.4 104L14.6 104Z" fill={u('gold')} strokeWidth="1" />
-                    <path d="M3.6 27.5L14.2 27.5L12.6 21L5.2 21Z" fill={u('gold')} strokeWidth="1.5" />
-                    <path d="M9 3.5L16.6 14L9 24.5L1.4 14Z" fill={u('amber')} strokeWidth="1.6" />
-                    <path d="M9 3.5L9 24.5M1.4 14L16.6 14" fill="none" stroke="#ffeec4" strokeWidth="0.7" opacity="0.6" />
-                    <path d="M9 6.5L13.8 13.6L9 12.4Z" fill="#fffbe8" opacity="0.8" stroke="none" />
-                  </g>
-                  <path d="M32 57C27 62 22 68 19.6 74" fill="none" strokeWidth="14.5" />
-                  <path d="M32 57C27 62 22 68 19.6 74" fill="none" stroke={u('coatSide')} strokeWidth="11" />
-                  <path d="M20.8 70.8C20.2 72 19.8 73.1 19.5 74.4" fill="none" stroke={u('lining')} strokeWidth="11.5" />
-                  <ellipse cx="21.6" cy="76.2" rx="4.1" ry="3.1" transform="rotate(-38 21.6 76.2)" fill={u('coatSide')} strokeWidth="1.8" />
-                  {/* oversized mitten wrapped around the shaft */}
-                  <ellipse cx="15.4" cy="81.8" rx="8.2" ry="7.6" fill={u('coatSide')} strokeWidth="2" />
-                  <path d="M18.8 78C19.6 80.6 19.4 83.4 18.2 85.8" fill="none" stroke="#3d1a5c" strokeWidth="1.3" opacity="0.45" />
-                  <path d="M9.4 79C10.8 75.4 14.4 73.6 17.8 74.8" fill="none" stroke="#eab9ff" strokeWidth="1.6" opacity="0.6" />
-                  <path d="M8.8 78.2C10.4 76 13 74.8 15.8 74.7" fill="none" stroke="#ffd0a0" strokeWidth="1.5" opacity="0.42" />
-                </g>
-              </g>
-
-              {/* floating spellbook: its own actor, so the next phase can fly it anywhere */}
-              <g className={g('book')}>
-                <g className={g('actBook')}>
-                  <g transform="rotate(-7 82.5 55)">
-                    <ellipse cx="82.5" cy="55" rx="21" ry="17" fill={u('bookGlow')} stroke="none" />
-                    <g className={g('pages')}>
-                      <path d="M73.5 46.5L95.5 46.5C96.1 53 96.1 60 95.5 66.5L73.5 66.5Z" fill={u('page')} strokeWidth="1.4" />
-                      <path d="M93.7 47.7C94.3 53.6 94.3 59.6 93.7 65.4M91.7 47.5C92.3 53.6 92.3 59.6 91.7 65.6" fill="none" stroke="#b39a68" strokeWidth="0.8" opacity="0.85" />
-                    </g>
-                    <path
-                      d="M73 44L92 44C93.5 44 94.2 44.8 94.2 46.2L94.2 63.8C94.2 65.2 93.5 66 92 66L73 66C71.5 66 70.8 65.2 70.8 63.8L70.8 46.2C70.8 44.8 71.5 44 73 44Z"
-                      fill={u('leather')}
-                      strokeWidth="1.9"
-                    />
-                    <path d="M74.6 44L78.2 44L78.2 66L74.6 66Z" fill="#4d2513" opacity="0.6" stroke="none" />
-                    {/* gold corner caps */}
-                    <g fill={u('gold')} strokeWidth="1.2">
-                      <path d="M73 44L79.4 44L73 50.4C71.5 50.4 70.8 49.6 70.8 48.2L70.8 46.2C70.8 44.8 71.5 44 73 44Z" />
-                      <path d="M92 44L85.6 44L92 50.4C93.5 50.4 94.2 49.6 94.2 48.2L94.2 46.2C94.2 44.8 93.5 44 92 44Z" />
-                      <path d="M73 66L79.4 66L73 59.6C71.5 59.6 70.8 60.4 70.8 61.8L70.8 63.8C70.8 65.2 71.5 66 73 66Z" />
-                      <path d="M92 66L85.6 66L92 59.6C93.5 59.6 94.2 60.4 94.2 61.8L94.2 63.8C94.2 65.2 93.5 66 92 66Z" />
-                    </g>
-                    {/* gold hex emblem with a violet gem */}
-                    <path d="M83.3 47.6L89.1 51L89.1 57.8L83.3 61.2L77.5 57.8L77.5 51Z" fill={u('gold')} strokeWidth="1.7" />
-                    <path d="M83.3 51L86.2 52.7L86.2 56.1L83.3 57.8L80.4 56.1L80.4 52.7Z" fill={u('gem')} strokeWidth="1.1" />
-                    <path d="M83.3 52L85.3 53.2L83.3 54.4L81.3 53.2Z" fill="#f6e6ff" opacity="0.75" stroke="none" />
-                    <path d="M72.2 45.2L91.1 45.2" fill="none" stroke="#ffd8a8" strokeWidth="1.1" opacity="0.5" />
-                    <ellipse cx="82" cy="71" rx="12" ry="2.6" fill="#1c0d2b" opacity="0.22" stroke="none" />
-                  </g>
-                  <g fill="#e0aeff" stroke="none">
-                    <path d="M94 34L94.9 36.4L97.3 37.3L94.9 38.2L94 40.6L93.1 38.2L90.7 37.3L93.1 36.4Z" opacity="0.7" />
-                    <path d="M69 70L69.7 71.7L71.4 72.4L69.7 73.1L69 74.8L68.3 73.1L66.6 72.4L68.3 71.7Z" opacity="0.45" />
-                    <path d="M96.5 64L97 65.3L98.3 65.8L97 66.3L96.5 67.6L96 66.3L94.7 65.8L96 65.3Z" opacity="0.55" />
                   </g>
                 </g>
               </g>
             </g>
           </g>
+
+          {/* the carpet's near edge again, this time in front of him: this is what makes him sit
+              IN it rather than on a stripe behind him. it is the same field and the same border
+              stack as the deck, clipped to the lens — paint it in the accent red instead and the
+              front half turns into a separate scarf lying across his lap. */}
+          {RIDE === 'carpet' && (
+            <g transform={`translate(0,${CARPET_LIFT})`}>
+              <g className={g('carpetLip')}>
+                <path d={CARPET_LIP_D} fill={u('carpetTop')} stroke="none" />
+                <g clipPath={u('carpetLipClip')} fill="none">
+                  <path d={CARPET_D} stroke={u('carpetTrim')} strokeWidth="5.2" />
+                  <path d={CARPET_D} stroke={u('carpetBand')} strokeWidth="4.2" />
+                  <path d={CARPET_D} stroke={u('carpetTrim')} strokeWidth="1.4" />
+                </g>
+                {/* the fold itself: light enough to catch, too dim to read as a stripe */}
+                <path d={CARPET_LIP_TOP_D} fill="none" stroke="#e6b9ff" strokeWidth="1.2" strokeLinecap="round" opacity="0.22" />
+                <path d={CARPET_LIP_BOT_D} fill="none" stroke="#2a1a3a" strokeWidth="2.1" strokeLinecap="round" />
+              </g>
+            </g>
+          )}
 
           {vignette && <VfxLayer uid={uid} u={u} v={vignette} />}
         </g>
