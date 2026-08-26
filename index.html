@@ -2,7 +2,11 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- interactive-widget=resizes-content: without it a phone keyboard PANS the visual
+         viewport instead of resizing the page, which slides every position:fixed element
+         out from under the visitor and leaves it there once the keyboard goes. asking for
+         a resize instead keeps dvh honest and gives the browser nothing to pan. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content" />
     <title>Zaibei Li | Portfolio</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />

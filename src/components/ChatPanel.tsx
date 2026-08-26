@@ -44,32 +44,49 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ open, onClose }) => {
     const el = panelRef.current;
     if (!open || !vv || !el) return;
 
+    const wide = window.matchMedia('(min-width: 768px)');
+    const clear = () => {
+      el.style.top = '';
+      el.style.height = '';
+    };
+
     const sync = () => {
-      // from md up the panel is a floating card that the keyboard never covers, and
-      // the inline values would fight the classes that place it
-      if (window.matchMedia('(min-width: 768px)').matches) {
-        el.style.top = '';
-        el.style.height = '';
-        return;
-      }
+      // from md up the panel is a floating card the keyboard never covers, and the
+      // inline values would fight the classes that place it
+      if (wide.matches) return clear();
+      // resting on NO inline styles is the point. the panel is only pinned while a
+      // keyboard is genuinely covering it, so a missed or stale event leaves a correct
+      // full-bleed panel rather than one stranded at the keyboard's geometry — which is
+      // exactly how the page ended up untappable before.
+      const covered = window.innerHeight - vv.height;
+      if (covered < 80 && vv.offsetTop < 8) return clear();
       el.style.top = `${vv.offsetTop}px`;
       el.style.height = `${vv.height}px`;
     };
 
-    sync();
-    vv.addEventListener('resize', sync);
+    // a keyboard animates, so the geometry that arrives with the event is not the
+    // geometry it settles on. re-reading twice afterwards costs nothing and is what
+    // makes the restore reliable rather than a race.
+    const timers: number[] = [];
+    const resync = () => {
+      sync();
+      timers.push(window.setTimeout(sync, 140), window.setTimeout(sync, 360));
+    };
+
+    resync();
+    vv.addEventListener('resize', resync);
     vv.addEventListener('scroll', sync);
-    // the breakpoint is watched directly rather than inferred from window resize: a
-    // crossing that arrives by any other route would otherwise leave the phone's
-    // inline top and height on the desktop card, which places it wrongly
-    const wide = window.matchMedia('(min-width: 768px)');
     wide.addEventListener('change', sync);
+    // dismissing the keyboard blurs the field, and on some browsers that is the only
+    // signal that arrives at all
+    el.addEventListener('focusout', resync);
     return () => {
-      vv.removeEventListener('resize', sync);
+      timers.forEach(window.clearTimeout);
+      vv.removeEventListener('resize', resync);
       vv.removeEventListener('scroll', sync);
       wide.removeEventListener('change', sync);
-      el.style.top = '';
-      el.style.height = '';
+      el.removeEventListener('focusout', resync);
+      clear();
     };
   }, [open]);
 
