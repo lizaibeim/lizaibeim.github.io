@@ -252,7 +252,9 @@ curl -N https://ask-zaibei.<subdomain>.workers.dev \
 
 ## Updating the knowledge base
 
-Edit `SYSTEM_PROMPT` (the `PERSONA` and `KNOWLEDGE` constants) in `worker.js`, then run `npx wrangler deploy`.
+Edit `SYSTEM_PROMPT` (the `PERSONA` and `KNOWLEDGE` constants) in `worker.js`. A push to `main` that touches `worker/` deploys it — see [Deploying from CI](#deploying-from-ci) — or run `npx wrangler deploy` yourself.
+
+**A block describing live code goes stale silently.** The OpenMMLA block drifted far enough to be wrong in public — it named a React dashboard that had become a static frontend, two PyPI packages that had become one, and a five-layer architecture that the repository had since restated as a three-stage flow, while missing MongoDB, Redis, Nginx, the `mmla` console and the record-then-replay collection path entirely. Nothing surfaced any of it; the answers stayed fluent. When a project's code moves, re-read the source and diff it against the block rather than trusting either the block or the project's own README. The OpenMMLA block was last checked against `ucph-ccs/openmmla` at `806961c` (August 2026).
 
 Per-project detail lives in `PROJECT_KNOWLEDGE` in the same file, one block per project id, plus `PROJECT_NAMES` for the display name used in the prompts. Adding or renaming a project means editing both objects here *and* `src/lib/projects.ts` — the ids have to match, or the page's requests come back as `400`.
 
@@ -298,7 +300,7 @@ What the code does: `tag_pos`, the dict of tag centres, is computed and then use
 
 Three things caused the error and are worth knowing before trusting any similar description:
 
-- **The project's own README is stale.** `base_stations/vfa/README.md` still lists "AprilTag detection and in-image coordinate calculation" as a pipeline step. The block had been written from the README rather than the code, which is the whole lesson: a repository's prose describes intent, and only the code describes behaviour.
+- **The project's own README was stale.** `base_stations/vfa/README.md` still listed "AprilTag detection and in-image coordinate calculation" as a pipeline step. The block had been written from the README rather than the code, which is the whole lesson: a repository's prose describes intent, and only the code describes behaviour. That file has since moved to `pipelines/vfa-base/README.md` and now describes the rendering step correctly — so the lesson holds even though this particular instance of it is closed.
 - **The LAK '25 paper describes a superseded implementation.** It says the analyzer "first detects AprilTags and calculates their in-image coordinates, constructing the prompt for the VLM", and the code of that period did exactly that — `user_text += f"- ID {person_id}: pos {position}\n"`, normalised image-plane fractions used to tell people apart. The pipeline has since moved to rendering. The block now states the current behaviour and notes the paper's version as history, because a visitor who has read the paper will otherwise think the site is wrong.
 - **The example was fabricated.** Metric inter-person distance in a prompt never existed in any version. An illustration invented to make a claim concrete is still an invention, and it made a wrong claim look researched.
 
