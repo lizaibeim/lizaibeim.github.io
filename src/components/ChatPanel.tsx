@@ -30,6 +30,49 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ open, onClose }) => {
     panelRef.current?.focus({ preventScroll: true });
   }, [open]);
 
+  // a phone keyboard does not resize the page, it pans the visual viewport to bring the
+  // focused field into view. a fixed element is positioned against the LAYOUT viewport,
+  // so the panel gets panned out from under the visitor — and because html, body and
+  // #root are all overflow:hidden, there is no scrollable ancestor left for the browser
+  // to put back afterwards. dismissing the keyboard therefore stranded the page at an
+  // offset with every tap landing somewhere it could not see, which reads as a freeze.
+  //
+  // gluing the panel to the visual viewport fixes both halves: it stays where the
+  // visitor is looking, and the browser has no reason to pan in the first place.
+  useEffect(() => {
+    const vv = window.visualViewport;
+    const el = panelRef.current;
+    if (!open || !vv || !el) return;
+
+    const sync = () => {
+      // from md up the panel is a floating card that the keyboard never covers, and
+      // the inline values would fight the classes that place it
+      if (window.matchMedia('(min-width: 768px)').matches) {
+        el.style.top = '';
+        el.style.height = '';
+        return;
+      }
+      el.style.top = `${vv.offsetTop}px`;
+      el.style.height = `${vv.height}px`;
+    };
+
+    sync();
+    vv.addEventListener('resize', sync);
+    vv.addEventListener('scroll', sync);
+    // the breakpoint is watched directly rather than inferred from window resize: a
+    // crossing that arrives by any other route would otherwise leave the phone's
+    // inline top and height on the desktop card, which places it wrongly
+    const wide = window.matchMedia('(min-width: 768px)');
+    wide.addEventListener('change', sync);
+    return () => {
+      vv.removeEventListener('resize', sync);
+      vv.removeEventListener('scroll', sync);
+      wide.removeEventListener('change', sync);
+      el.style.top = '';
+      el.style.height = '';
+    };
+  }, [open]);
+
   return (
     <AnimatePresence>
       {open && (
