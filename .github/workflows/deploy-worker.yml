@@ -1,0 +1,80 @@
+# Deploys the Cloudflare Worker that answers the ask-me-anything box.
+#
+# deploy.yml is the other half of this repo's deployment and does NOT cover the
+# worker: it builds src/ into dist/ and publishes that to GitHub Pages, and
+# nothing in worker/ is part of that build. A change to the system prompt in
+# worker/worker.js therefore reaches visitors only through this workflow.
+name: Deploy worker to Cloudflare
+
+on:
+  # Only when the worker itself changes — a front-end-only commit has nothing to
+  # redeploy, and a needless deploy is a needless chance to break a live worker.
+  push:
+    branches: ['main']
+    paths:
+      - 'worker/**'
+      - '.github/workflows/deploy-worker.yml'
+
+  # Redeploy the current main by hand from the Actions tab. This is also how you
+  # deploy after adding the CLOUDFLARE_API_TOKEN secret for the first time,
+  # without having to push an empty commit to trigger the path filter above.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One deploy at a time. Not cancel-in-progress: a half-cancelled `wrangler
+# deploy` is a worse state than a superseded one, and the run is short.
+concurrency:
+  group: 'worker-deploy'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # wrangler v4 needs Node 22+, which is why this is not the Node 20 that
+      # deploy.yml pins for the Vite build. See worker/README.md, Prerequisites.
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # Without this the run fails several minutes later inside wrangler, with an
+      # authentication error that never names the missing secret.
+      - name: Check the API token is set
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "::error::CLOUDFLARE_API_TOKEN is not set. Create a token at https://dash.cloudflare.com/profile/api-tokens with the 'Edit Cloudflare Workers' template, then add it under Settings -> Secrets and variables -> Actions -> New repository secret."
+            exit 1
+          fi
+
+      # worker.js is plain JavaScript with no build step, so nothing else would
+      # catch a syntax error before it reached the live worker.
+      - name: Check the worker parses
+        run: node --check worker/worker.js
+
+      # This uploads worker.js and the [vars] block in wrangler.toml. Secrets
+      # already installed on the worker — DASHSCOPE_API_KEY — are held by
+      # Cloudflare and are left untouched by a deploy, so the key never has to
+      # pass through CI. Same command as the local one in worker/README.md.
+      #
+      # wrangler is pinned rather than tracked: a deploy path should not change
+      # under you between two pushes. Bump it deliberately.
+      - name: Deploy
+        working-directory: worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          # Only needed when the token can see more than one Cloudflare account.
+          # Exported below rather than here: wrangler reads this variable with
+          # ??, so an empty string would count as a value and fail the deploy.
+          ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -n "$ACCOUNT_ID" ]; then
+            export CLOUDFLARE_ACCOUNT_ID="$ACCOUNT_ID"
+          fi
+          npx --yes wrangler@4.126.0 deploy

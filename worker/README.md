@@ -27,6 +27,18 @@ For the GitHub Pages deploy, the second option is already wired up: add a reposi
 
 Redeploying is just `npx wrangler deploy` again; the secret persists.
 
+### Deploying from CI
+
+`.github/workflows/deploy-worker.yml` runs that same `wrangler deploy` on every push to `main` that touches `worker/`, so a prompt edit does not need a machine with wrangler logged in. It is deliberately separate from `deploy.yml`: that one builds `src/` into `dist/` for GitHub Pages and never looks at `worker/`, which is why a push that changed only the system prompt used to show a green Pages deploy while the live worker kept answering from the old one.
+
+One secret turns it on. Create a token at [dash.cloudflare.com/profile/api-tokens](https://dash.cloudflare.com/profile/api-tokens) from the **Edit Cloudflare Workers** template — Cloudflare shows it once, at creation — and add it under Settings → Secrets and variables → Actions as `CLOUDFLARE_API_TOKEN`. Add `CLOUDFLARE_ACCOUNT_ID` as a second secret only if the token can see more than one account; with one account wrangler finds it by itself. Until the token is there the workflow fails on its first step with a message naming what is missing, rather than somewhere deep inside wrangler.
+
+`DASHSCOPE_API_KEY` stays out of CI. It lives on the worker in Cloudflare, and a deploy does not touch the secrets already installed there, so it never has to be handed to GitHub.
+
+The path filter means a front-end-only commit skips this workflow entirely. To deploy the current `main` without a qualifying commit — the first deploy after adding the token, for instance — run the workflow by hand from the Actions tab.
+
+The wrangler version is pinned in the workflow rather than tracked as `@latest`, so the deploy path cannot change between two pushes. Bump it deliberately when you bump the local one.
+
 ## Region
 
 `DASHSCOPE_BASE_URL` in `wrangler.toml` is set to `https://dashscope.aliyuncs.com`, the China (Beijing) endpoint, matching the console this key was issued from. The international (Singapore) endpoint is `https://dashscope-intl.aliyuncs.com`. Keys are region-specific: using the wrong one fails with DashScope 401 `invalid_api_key`, which the worker reports to the browser as a generic 502. Run `npx wrangler tail` to see the real upstream error.
