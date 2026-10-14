@@ -223,8 +223,8 @@ const H_TRAIL = [
   { x: 55, y: 76 },
 ];
 
-// #5 the badge pins to the left collar wing, high and clear of the belt and both clasps;
-// from there the arcs open up-left into the only open quadrant the figure leaves
+// #5 the badge pins to the left shoulder at the collar's edge, high and clear of the belt and
+// both clasps; from there the arcs open up-left into the only open quadrant the figure leaves
 const P_BX = 24;
 const P_BY = 58;
 const P_SPARKS = [
@@ -294,7 +294,7 @@ const rigOrigins = (uid: string, key: string | null) => {
     ['actEyes', '48px 40px'],
     ['actBook', '82.5px 55px'],
     // base groups that the polish pass now transforms
-    ['brows', '48px 31.8px'],
+    ['brows', '48px 32px'],
     ['mouthopen', '48.4px 49.8px'],
     // flight rig: the vehicle, and the parts of him that only exist off the ground
     ['carpet', '48px 115px'],
@@ -310,8 +310,8 @@ const rigOrigins = (uid: string, key: string | null) => {
     // replacement face
     ['vfEyes', '48px 40px'],
     ['vfPupils', '48.3px 41.5px'],
-    ['vfBrows', '48px 31.8px'],
-    ['vfBrowR', '57px 31.8px'],
+    ['vfBrows', '48px 32px'],
+    ['vfBrowR', '57px 32px'],
     ['vfMouth', '48.4px 49.8px'],
     ['vfMouthO', '48.4px 49.8px'],
     ['vfMouthBig', '48.4px 49.8px'],
@@ -2160,6 +2160,7 @@ const VignetteDefs: React.FC<Omit<FxProps, 'u'>> = ({ uid, v }) => (
         <path d="M64 57C69 63 73.4 69.6 74.8 75.4M32 57C27 62 22 68 19.8 73.6" fill="none" strokeWidth="12" />
         <ellipse cx="76.2" cy="83.2" rx="5.6" ry="5.8" strokeWidth="0" />
         <ellipse cx="15.4" cy="81.8" rx="5.6" ry="5.8" strokeWidth="0" />
+        <path d={HAIR_BACK_D} strokeWidth="0" />
         <path d={HAIR_D} strokeWidth="0" />
         <path d={FACE_D} strokeWidth="0" />
         <g transform="rotate(-3.5 48 21)">
@@ -2631,56 +2632,72 @@ const HAT_BRIM_D =
 const HAT_TIP_X = 23.4;
 const HAT_TIP_Y = 6.4;
 
-// the face keeps its width through the eyes, then turns at the cheekbone into two straight
-// jawlines that meet in a small chin — the V that keeps a big-eyed face from reading as a
-// round one. the chin sits clear of the scarf, with a short neck under it, so the jaw has
-// something to read against
+// the face keeps its width through the eyes, then the cheeks round off and the jaw CURVES in
+// to a small rounded chin: a soft oval that narrows to a point that is still round, never two
+// straight lines meeting in a dagger (that read as a vampire) and never a wide round bottom
+// (that read as a potato). the chin sits clear of the scarf, with a short neck under it, and
+// dark back hair behind the jaw, so the jawline always has something to read against
 const FACE_D =
-  'M28.2 32C28.2 23.4 36.8 15.6 48 15.6C59.2 15.6 67.8 23.4 67.8 32C67.8 36.6 67.2 40.2 65.6 43.4L50.2 54.2C48.8 54.9 47.2 54.9 45.8 54.2L30.4 43.4C28.8 40.2 28.2 36.6 28.2 32Z';
+  'M28.4 32C28.4 23.4 37 15.6 48 15.6C59 15.6 67.6 23.4 67.6 32C67.6 35.6 67.5 37.8 67.1 39.8C66.6 44.8 61.2 49.1 55.2 52.2C52.2 53.9 49.9 54.7 48 54.7C46.1 54.7 43.8 53.9 40.8 52.2C34.8 49.1 29.4 44.8 28.9 39.8C28.5 37.8 28.4 35.6 28.4 32Z';
 
-// the hair under the brim. its outline runs round the side locks, which break into points
-// that flick outward, then back across the forehead as a fringe of strands swept toward
-// the trailing side in four broad locks. the longest falls between the eyes; the outer ones
-// just touch the lids, the way the fringe lies in the Genshin cast
+// copper hair under the brim, worn tousled. under the brim a pointed tuft kicks out on each
+// side, a shorter layered lock hangs below it, and the long side lock falls down the cheek and
+// curls IN toward the chin, so the outline reads as layered points, not a helmet. across the
+// forehead runs a fringe of six pointed locks swept toward the trailing side, the longest
+// between the eyes
 const HAIR_D =
-  'M26.6 57.4C24.4 55 22.6 52.4 21.2 49.6L23.8 47.4C21.6 45.2 20.2 42.8 19.6 40.2L23.2 37.8C21.6 35.6 20.6 33.2 20.4 30.6L24 25.6C26.4 22.4 29.4 20 33.2 18.6C37.8 17 43 16.4 48 16.4C53.4 16.4 58.4 17.2 62.8 18.8C66.8 20.2 70 22.6 72.2 25.6L75.4 31.4C74.6 33.6 73.6 35.4 72.4 37L76.2 42.6C75 44.2 73.8 45.4 72.6 46.4L74.4 52.8C73 52.8 71.8 52.6 70.6 52.2L68.6 57C67.8 52.8 67 48.6 66.2 44.6L65.2 46.2C65.4 40.4 65 35 63.8 29.8Q63.8 33.4 62 35.8Q60.8 33.4 58.4 32Q55.6 35 51.6 38.4Q50.6 34.4 48.2 32.2Q45.6 33.6 42.6 35.4Q41.2 33.4 39.4 32Q36 34 31 36.6C30.9 39.8 30.6 42.8 30.2 46L28.8 43.8C28.4 48.6 27.6 53.2 26.6 57.4Z';
-// the parting lines inside the fringe and down the locks
+  'M34.4 51.2C31.6 50.6 29 48.8 27.6 46.2C26.8 44.6 26.4 42.6 26.4 40.6C25.8 42.6 25.4 44.4 24.6 46.2C22 44.8 20.2 41.4 20.2 37.6C20.2 35.8 20.5 34.4 21 33.4C19.4 32.8 17.8 32.2 15.8 31.8C17.2 30.6 18.6 29 19.4 27.4C20.4 23.6 23 21.2 26.6 19.6C32 17.2 40 16.4 48 16.4C56 16.4 64 17.2 69.4 19.6C73 21.2 75.4 23.4 76.2 26.2C77.8 26.8 79.2 27.4 80.8 27.8C79.6 29 78 30.2 76.2 31C77.4 34 77.4 38 76.2 41.2C75.4 43.2 74 44.8 72.4 45.8C72.4 43.8 72 42 71.4 40.4C71.4 44.4 70.4 47.8 68.4 50.4C66.6 52.6 64.4 53.8 62 54.2C63 52 64.2 49.6 64.8 47C65.4 44.4 65.6 41.6 65.6 38.6C65.6 36 65.2 33.6 64.6 31.4C64.4 33.6 63.8 35.4 62.6 36.6C62.2 34 61.2 32.4 59.6 31.4C59.2 33.4 57.4 35 55 35.4C54.6 33.6 54 31.8 53.4 30.6C53.4 34 51.8 37.4 49.6 39C49.8 36 48.8 33 47.2 31.4C46.6 33.6 44.8 35.4 42.4 36C42.6 34 41.8 32.2 40.4 31C39.6 33.2 37.8 34.6 35.6 35C35.6 33.6 34.8 32.4 33.6 31.8C32.8 31.6 31.9 31.6 31.4 31.8C30.9 34.6 30.4 37.6 30.4 40.4C30.4 43.4 31.2 46.6 32.4 48.6C33 49.6 33.6 50.4 34.4 51.2Z';
+// the nape, behind the face: fills the space between each side lock and the jaw with a deeper
+// auburn, so the jawline reads against hair rather than against a hole
+const HAIR_BACK_D =
+  'M28.2 30C28 38.4 28.8 45.2 31.8 50.2C32.6 50.9 33.4 51.2 34.6 51.3C36.6 51.6 38.8 51.6 40.6 52.2C44 49.6 52 49.6 55.4 52.2C57.6 53.2 60 53.8 62.4 54C63.6 52.6 64.6 51.2 65.6 49.6C67.8 45.6 68.8 38.6 68.8 30Z';
+// one strand line down each lock, following its curl; none crosses from one lock to the next
 const HAIR_STRANDS_D =
-  'M60.2 30C59 32 57 34.6 54.6 36.6M51.4 29.8C49.8 31.6 47.6 33.4 45.2 34.6M42.2 29.8C40.2 31.8 37.6 33.6 34.6 35.2M26.4 44C25.6 47.4 25.8 51 26.6 55.4M69.2 44.4C69.4 47.6 69 51 68.6 55';
+  'M28.6 38.4C28.4 42.6 29.4 46.2 32 49.4M22.6 36C22.4 39.4 22.8 42 23.8 44.2M68.8 37.6C69 42.6 68 47 65 51.4M74.6 34C75 37.4 74.6 40.6 73.4 43.4';
+// the gloss: one ring of light across the crown, broken into three tapered slivers
+const HAIR_GLOSS_D =
+  'M34.2 31.2C36 30.1 38.2 29.6 40.4 29.7C38.4 30.3 36.2 30.8 34.2 31.2ZM43.2 29.5C45.2 29 47.6 28.9 49.8 29.2C47.6 29.7 45.4 29.8 43.2 29.5ZM53.4 29.4C55.6 29.4 57.8 29.9 59.6 30.8C57.6 30.6 55.4 30.2 53.4 29.4Z';
 
 // big eyes on the old centres (38.8, 39.5) and (57.2, 39.5), so the glasses still land on
-// them: a low, nearly level upper lid that reads as self-assured, a rounder bottom, and an
-// iris that fills most of the white. drawn in the Genshin manner — a heavy upper lash that thickens toward the outer
-// corner, a lighter lower one, and an iris that darkens under the lid
+// them: a relaxed upper lid that runs flatter toward the nose, a rounder bottom, and a deep
+// sapphire iris that fills most of the white. drawn in the Genshin manner — a dark-brown (not
+// black) upper lash that is thin at the inner corner, carries its weight to the outer corner
+// and ends in a flick that drops past the white, a short lower lash and a small tick under it
 const EYE_L_D =
-  'M33.4 38C34.2 36 36.6 34.8 39.2 34.8C41.8 34.8 43.8 36 44.4 38.2L44.4 40.6C44 43.4 41.8 45.2 39 45.2C36.2 45.2 33.8 43.4 33.4 40.6Z';
+  'M33 38.4C33.5 36.2 36.2 34.9 39.2 34.9C41.9 34.9 43.8 35.8 44.4 37.6L44.4 40.6C44 43.4 41.6 45.2 38.8 45.2C36 45.2 33.4 43.4 33 40.6Z';
 const EYE_R_D =
-  'M62.6 38C61.8 36 59.4 34.8 56.8 34.8C54.2 34.8 52.2 36 51.6 38.2L51.6 40.6C52 43.4 54.2 45.2 57 45.2C59.8 45.2 62.2 43.4 62.6 40.6Z';
-// the upper lash lines as filled shapes: thick over the outer corner, tapering to a point at
-// the inner one
+  'M63 38.4C62.5 36.2 59.8 34.9 56.8 34.9C54.1 34.9 52.2 35.8 51.6 37.6L51.6 40.6C52 43.4 54.4 45.2 57.2 45.2C60 45.2 62.6 43.4 63 40.6Z';
+// the upper lash lines as filled shapes: heavy over the outer corner, where they flick out and
+// down, thinning to a fine point at the inner one
 const LASH_D =
-  'M31.6 38.8C32.2 36 35.4 34 39 34C42 34 44.2 35.4 44.9 37.8C44 36.6 42 35.7 39.2 35.7C36.4 35.7 34.2 37 33.6 38.8C32.9 38.6 32.3 38.6 31.6 38.8ZM64.4 38.8C63.8 36 60.6 34 57 34C54 34 51.8 35.4 51.1 37.8C52 36.6 54 35.7 56.8 35.7C59.6 35.7 61.8 37 62.4 38.8C63.1 38.6 63.7 38.6 64.4 38.8Z';
-const LOWER_LASH_D = 'M34.2 42.4C35.4 44.4 37.2 45.4 39.4 45.4M61.8 42.4C60.6 44.4 58.8 45.4 56.6 45.4';
+  'M30.4 40.4C31 36.6 34.8 34 39.4 34C42.6 34 44.8 35.1 45.3 37.2C44.3 36 42.2 35.3 39.4 35.3C36.4 35.3 34.4 36.6 33.4 38.9C32.4 39.2 31.3 39.7 30.4 40.4ZM65.6 40.4C65 36.6 61.2 34 56.6 34C53.4 34 51.2 35.1 50.7 37.2C51.7 36 53.8 35.3 56.6 35.3C59.6 35.3 61.6 36.6 62.6 38.9C63.6 39.2 64.7 39.7 65.6 40.4Z';
+const LOWER_LASH_D =
+  'M33.3 41.2C33.9 43.4 35.5 44.9 37.8 45.4M62.7 41.2C62.1 43.4 60.5 44.9 58.2 45.4';
 const LID_D = 'M31.8 39C34.6 41.8 41.4 42.2 45 39.8M64.2 39C61.4 41.8 54.6 42.2 51 39.8';
-const BROW_L_D = 'M33.8 32.6C36.4 31.4 40.2 31 43.6 31.8';
-const BROW_R_D = 'M52.4 31.8C55.8 31 59.6 31.4 62.2 32.6';
-// a small open grin, wider on one side: easy confidence rather than a polite smile
-const MOUTH_D = 'M45.4 48.4C46.6 50.9 49.8 51 51.2 48C49.4 48.8 47.2 48.9 45.4 48.4Z';
+// short brows, level and sure: a full head at the inner end, a fine tail at the outer one,
+// low enough to show through the gaps in the fringe
+const BROW_L_D =
+  'M35.2 32.3C37 31.1 40 31 42.6 32C42.9 32.2 42.7 32.7 42.3 32.6C40 31.9 37.4 31.8 35.2 32.3Z';
+const BROW_R_D =
+  'M60.8 32.3C59 31.1 56 31 53.4 32C53.1 32.2 53.3 32.7 53.7 32.6C56 31.9 58.6 31.8 60.8 32.3Z';
+// a small closed smile, one corner lifted: easy and sure of itself. it only opens to talk
+const MOUTH_D =
+  'M45.9 49.2C47.1 50.6 49.9 50.7 51.4 48.4C51.5 48.7 51.5 49 51.3 49.3C49.6 51.1 46.9 51 45.9 49.2Z';
 
 // the irises and their glints, shared by the base face and the replacement one. each is a
-// gold that is dark under the lid and bright where the light pools at the bottom, with a
+// sapphire that is deep navy under the lid and sky-bright where the light pools, with a
 // small upright pupil and three catchlights. they are clipped to the whites, so a vignette
 // can dart them without them leaving the eye
 const Irises: React.FC<{ u: (n: string) => string }> = ({ u }) => (
   <>
-    {[39.2, 56.8].map((cx) => (
+    {[39, 57].map((cx) => (
       <g key={cx}>
-        <ellipse cx={cx} cy="40.2" rx="4.3" ry="5.3" fill={u('iris')} stroke="#4a2208" strokeWidth="0.6" />
-        <ellipse cx={cx} cy="42.9" rx="2.9" ry="1.7" fill="#ffe48a" opacity="0.7" />
-        <ellipse cx={cx} cy="40.3" rx="1.35" ry="2.3" fill="#2a1405" />
-        <ellipse cx={cx - 1.7} cy="37.9" rx="1.5" ry="1.8" fill="#ffffff" />
+        <ellipse cx={cx} cy="40.4" rx="4.7" ry="5.3" fill={u('iris')} stroke="#141f52" strokeWidth="0.6" />
+        <ellipse cx={cx} cy="43" rx="3.1" ry="1.7" fill="#8fd6f4" opacity="0.55" />
+        <ellipse cx={cx} cy="40.4" rx="1.4" ry="2.3" fill="#0a1238" />
+        <ellipse cx={cx - 1.7} cy="38" rx="1.5" ry="1.8" fill="#ffffff" />
         <circle cx={cx + 1.9} cy="43.2" r="0.75" fill="#ffffff" opacity="0.9" />
-        <circle cx={cx + 2} cy="37.6" r="0.5" fill="#ffffff" opacity="0.8" />
+        <circle cx={cx + 2} cy="37.7" r="0.5" fill="#ffffff" opacity="0.8" />
       </g>
     ))}
   </>
@@ -2702,9 +2719,10 @@ const COAT_D =
 const COAT_HEM_D =
   'M18.4 100.8C23 99.2 27.4 97.8 31.4 96.6C33.2 96 34.8 95.2 36.2 94C40.6 88.6 43.8 82.4 45.6 75.4M50.4 75.4C52.2 82.4 55.4 88.6 59.8 94C61.2 95.2 62.8 96 64.6 96.6C68.6 97.8 72.4 98.4 76.4 99.2';
 
-// a tall standing collar whose wings finish in points beside the head
+// a low rolled collar that sits round the base of the neck. it stays below the jaw: wings
+// rising to points beside the head made a Dracula collar of it
 const COLLAR_D =
-  'M24 64.4C20.4 58.4 18.2 50.6 17 41.2C16.8 39.8 18 39.2 19.2 39.8L33.6 50.4C36.6 54 41.6 56 48 56C54.4 56 59.4 54 62.4 50.4L76.8 39.8C78 39.2 79.2 39.8 79 41.2C77.8 50.6 75.6 58.4 72 64.4C62 68.4 34 68.4 24 64.4Z';
+  'M25.6 62C25 57.2 27.6 53 32 50.8C36.8 48.6 42.4 48 48 48C53.6 48 59.2 48.6 64 50.8C68.4 53 71 57.2 70.4 62C62 66.4 34 66.4 25.6 62Z';
 
 // the scarf's two loose ends. they leave from behind the trailing collar wing and stream
 // away from the way he faces, each forked at the tip; the flip carries them with facing
@@ -2761,8 +2779,9 @@ const carpetDiamond = (cx: number, cy: number, w: number, h: number) =>
 // would overwrite anything set there.
 const CARPET_LIFT = -25;
 
-// a battle-mage in a royal-blue frock coat: sharp collar, a crimson scarf in the wind, silver
-// hair, gold eyes, and the amber crystal in a crescent as the one light he carries
+// a battle-mage in a royal-blue frock coat: a low gold-edged collar, a crimson scarf in the
+// wind, tousled copper hair, sapphire eyes, and the amber crystal in a crescent as the one
+// light he carries
 export const CompanionSprite: React.FC<CompanionSpriteProps> = ({
   facing,
   state,
@@ -2827,7 +2846,7 @@ export const CompanionSprite: React.FC<CompanionSpriteProps> = ({
           <stop offset="0.5" stopColor="#3651d0" />
           <stop offset="1" stopColor="#18245e" />
         </linearGradient>
-        {/* the collar's inside face: dark enough that the silver hair and the face stand off it */}
+        {/* the collar's inside face: dark enough that the jaw and the neck stand off it */}
         <linearGradient id={g('collarIn')} x1="0.2" y1="0" x2="0.8" y2="1">
           <stop offset="0" stopColor="#2c3c8c" />
           <stop offset="1" stopColor="#0f1640" />
@@ -2854,28 +2873,40 @@ export const CompanionSprite: React.FC<CompanionSpriteProps> = ({
           <stop offset="0.5" stopColor="#dda93c" />
           <stop offset="1" stopColor="#a86f14" />
         </linearGradient>
-        {/* silver hair with a blue cast. its middle tone has to sit well below the pale skin,
-            or the fringe disappears into the forehead and only its outline is left */}
+        {/* copper hair: light where the light catches the fringe, ginger through the middle,
+            dark auburn at the roots and the ends. it echoes nothing else on him, so the head
+            is the one warm mass against the blue */}
         <linearGradient id={g('hair')} x1="0.15" y1="0" x2="0.85" y2="1">
-          <stop offset="0" stopColor="#f2f4ff" />
-          <stop offset="0.3" stopColor="#ccd3f0" />
-          <stop offset="0.7" stopColor="#97a2d2" />
-          <stop offset="1" stopColor="#5f6aa2" />
+          <stop offset="0" stopColor="#f6a062" />
+          <stop offset="0.3" stopColor="#e8823e" />
+          <stop offset="0.66" stopColor="#bb5228" />
+          <stop offset="1" stopColor="#7a2c16" />
         </linearGradient>
-        {/* a pale, faintly pink skin with almost no falloff: shading it toward orange is what
-            made the face read as a lump */}
+        {/* the nape behind the jaw: the same copper, two steps deeper */}
+        <linearGradient id={g('hairBack')} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#9c3e1a" />
+          <stop offset="1" stopColor="#5e1f0e" />
+        </linearGradient>
+        {/* warm, healthy peach with a gentle falloff. the near-white skin this replaced read as
+            corpse-pale next to the silver hair */}
         <linearGradient id={g('skin')} x1="0.3" y1="0" x2="0.7" y2="1">
-          <stop offset="0" stopColor="#fffaf6" />
-          <stop offset="0.6" stopColor="#ffece2" />
-          <stop offset="1" stopColor="#f9d6c6" />
+          <stop offset="0" stopColor="#fff0e2" />
+          <stop offset="0.55" stopColor="#ffe0c8" />
+          <stop offset="1" stopColor="#f6c3a2" />
         </linearGradient>
-        {/* gold irises, dark under the lid and bright at the bottom where the light pools */}
+        {/* sapphire irises that echo the coat: navy under the lid, sky blue where the light pools */}
         <linearGradient id={g('iris')} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#3d1c06" />
-          <stop offset="0.3" stopColor="#8a4510" />
-          <stop offset="0.62" stopColor="#e0901f" />
-          <stop offset="0.85" stopColor="#ffc94a" />
-          <stop offset="1" stopColor="#fff0b0" />
+          <stop offset="0" stopColor="#1b2f6b" />
+          <stop offset="0.32" stopColor="#21468f" />
+          <stop offset="0.62" stopColor="#2c78c4" />
+          <stop offset="0.86" stopColor="#5cb4e8" />
+          <stop offset="1" stopColor="#b4e8ff" />
+        </linearGradient>
+        {/* the whites sit in the lash's shade at the top, so they never glare */}
+        <linearGradient id={g('sclera')} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#c4c6dc" />
+          <stop offset="0.38" stopColor="#eceef8" />
+          <stop offset="1" stopColor="#fdfdff" />
         </linearGradient>
         <linearGradient id={g('trouser')} x1="0.15" y1="0" x2="0.85" y2="1">
           <stop offset="0" stopColor="#3b4782" />
@@ -3025,6 +3056,9 @@ export const CompanionSprite: React.FC<CompanionSpriteProps> = ({
         </clipPath>
         <clipPath id={g('coatClip')}>
           <path d={COAT_D} />
+        </clipPath>
+        <clipPath id={g('hairClip')}>
+          <path d={HAIR_D} />
         </clipPath>
         <clipPath id={g('eyeClip')}>
           <path d={EYE_L_D} />
@@ -3194,16 +3228,16 @@ export const CompanionSprite: React.FC<CompanionSpriteProps> = ({
                       </g>
                     </g>
 
-                    {/* tall standing collar, behind the head, its wings ending in points */}
+                    {/* low rolled collar behind the neck, gold-edged; nothing rises beside the head */}
                     <path d={COLLAR_D} fill={u('collarG')} strokeWidth="1.6" />
                     <path
-                      d="M26.2 62.6C23.4 57.6 21.6 51.4 20.6 44.2L32.8 52.4C36.2 55.6 41.6 57.4 48 57.4C54.4 57.4 59.8 55.6 63.2 52.4L75.4 44.2C74.4 51.4 72.6 57.6 69.8 62.6Z"
+                      d="M30.4 56C31.4 53.4 33.4 51.6 36.4 50.6C40 49.6 44 49.4 48 49.4C52 49.4 56 49.6 59.6 50.6C62.6 51.6 64.6 53.4 65.6 56C60 57.6 36 57.6 30.4 56Z"
                       fill={u('collarIn')}
                       strokeWidth="1.2"
                     />
-                    <path d="M20 58.2C18.4 52.8 17.4 47 17 41.2C16.8 39.8 18 39.2 19.2 39.8L32.4 49.6" fill="none" stroke={u('gold')} strokeWidth="1.8" />
-                    <path d="M76 58.2C77.6 52.8 78.6 47 79 41.2C79.2 39.8 78 39.2 76.8 39.8L63.6 49.6" fill="none" stroke={u('gold')} strokeWidth="1.8" />
-                    <path d="M22.4 60C20.4 55 19.4 50 18.8 44.2" fill="none" stroke="#c9d6ff" strokeWidth="1.8" opacity="0.5" filter={u('soft')} />
+                    <path d="M26.4 58C27 54.6 29 52.2 32.2 50.9C35.4 49.6 39.4 49 43.4 48.8" fill="none" stroke={u('gold')} strokeWidth="1.6" />
+                    <path d="M69.6 58C69 54.6 67 52.2 63.8 50.9C60.6 49.6 56.6 49 52.6 48.8" fill="none" stroke={u('gold')} strokeWidth="1.6" />
+                    <path d="M27.4 60.4C27.4 57.4 28.6 55 30.8 53.2" fill="none" stroke="#c9d6ff" strokeWidth="1.6" opacity="0.5" filter={u('soft')} />
 
                     {/* coat */}
                     <path d={COAT_D} fill={u('coat')} strokeWidth="1.6" />
@@ -3228,8 +3262,8 @@ export const CompanionSprite: React.FC<CompanionSpriteProps> = ({
                       <circle cx="54.8" cy="65.2" r="1.5" />
                     </g>
                     {/* the neck, with the chin's shadow under the jaw */}
-                    <path d="M43.4 49L52.6 49L52.8 60L43.2 60Z" fill="#f7d9cb" stroke="#5a3330" strokeWidth="1.2" />
-                    <path d="M43.3 51.6L48 54.9L52.7 51.6L52.7 56.4C50.4 57.6 45.6 57.6 43.3 56.4Z" fill="#e2ab97" opacity="0.75" stroke="none" />
+                    <path d="M45 49L51 49L51.2 60L44.8 60Z" fill="#f8d2b6" stroke="#6e3a2a" strokeWidth="1.2" />
+                    <path d="M45.4 51L50.6 51L50.6 54.9C49.9 55.9 49 56.4 48 56.4C47 56.4 46.1 55.9 45.4 54.9Z" fill="#e3a283" opacity="0.85" stroke="none" />
                     {/* the scarf wrapped at the base of the neck, knotted, its short ends lying on
                         the shirt */}
                     <path d="M37 56C41.4 59 54.6 59 59 56L58.8 60.6C54.4 63.4 41.6 63.4 37.2 60.6Z" fill={u('scarf')} strokeWidth="1.6" />
@@ -3265,65 +3299,80 @@ export const CompanionSprite: React.FC<CompanionSpriteProps> = ({
                 {/* head, face, hair, hat */}
                 <g className={g('head')}>
                   <g className={g('actHead')}>
-                    <path d={FACE_D} fill={u('skin')} stroke="#5a3330" strokeWidth="1.2" />
-                    <ellipse cx="35" cy="46.8" rx="2.6" ry="1.2" fill="#ff8fa6" opacity="0.3" stroke="none" filter={u('soft')} />
-                    <ellipse cx="61" cy="46.8" rx="2.6" ry="1.2" fill="#ff8fa6" opacity="0.3" stroke="none" filter={u('soft')} />
+                    <path d={HAIR_BACK_D} fill={u('hairBack')} stroke="#5a1e0c" strokeWidth="1.1" />
+                    <path d={FACE_D} fill={u('skin')} stroke="#6e3a2a" strokeWidth="1.2" />
+                    <path
+                      d="M31.8 29.6L65 29.6L65 32.5C64.8 34.7 64.2 36.5 63 37.7C62.6 35.1 61.6 33.5 60 32.5C59.6 34.5 57.8 36.1 55.4 36.5C55 34.7 54.4 32.9 53.8 31.7C53.8 35.1 52.2 38.5 50 40.1C50.2 37.1 49.2 34.1 47.6 32.5C47 34.7 45.2 36.5 42.8 37.1C43 35.1 42.2 33.3 40.8 32.1C40 34.3 38.2 35.7 36 36.1C36 34.7 35.2 33.5 34 32.9C33.2 32.7 32.3 32.7 31.8 32.9Z"
+                      fill="#e2906c"
+                      opacity="0.42"
+                      stroke="none"
+                    />
+                    <ellipse cx="36.2" cy="46.4" rx="2.8" ry="1.4" fill="#ff8a86" opacity="0.42" stroke="none" filter={u('soft')} />
+                    <ellipse cx="59.8" cy="46.4" rx="2.8" ry="1.4" fill="#ff8a86" opacity="0.42" stroke="none" filter={u('soft')} />
 
                     {/* eyes: the whole group squashes for the blink */}
                     <g className={g('actEyes')}>
                       <g className={g('eyes')} stroke="none">
-                        <path d={EYE_L_D} fill="#fbfcff" />
-                        <path d={EYE_R_D} fill="#fbfcff" />
+                        <path d={EYE_L_D} fill={u('sclera')} />
+                        <path d={EYE_R_D} fill={u('sclera')} />
                         <g clipPath={u('eyeClip')}>
                           <Irises u={u} />
                         </g>
-                        <path d={LASH_D} fill="#2a1820" stroke="#2a1820" strokeWidth="0.4" />
-                        <path d={LOWER_LASH_D} fill="none" stroke="#6a3a3a" strokeWidth="0.9" opacity="0.55" />
+                        <path d={LASH_D} fill="#3e1e16" stroke="#3e1e16" strokeWidth="0.4" />
+                        <path d={LOWER_LASH_D} fill="none" stroke="#7a3a2c" strokeWidth="0.75" opacity="0.7" />
                       </g>
                       {/* replacement eyes: identical art, but the vignette can scale and dart them */}
                       {vignette && (
                         <g className={g('vfEyes')} stroke="none">
-                          <path d={EYE_L_D} fill="#fbfcff" />
-                          <path d={EYE_R_D} fill="#fbfcff" />
+                          <path d={EYE_L_D} fill={u('sclera')} />
+                          <path d={EYE_R_D} fill={u('sclera')} />
                           <g clipPath={u('eyeClip')}>
                             <g className={g('vfPupils')}>
                               <Irises u={u} />
                             </g>
                           </g>
-                          <path d={LASH_D} fill="#2a1820" stroke="#2a1820" strokeWidth="0.4" />
-                          <path d={LOWER_LASH_D} fill="none" stroke="#6a3a3a" strokeWidth="0.9" opacity="0.55" />
+                          <path d={LASH_D} fill="#3e1e16" stroke="#3e1e16" strokeWidth="0.4" />
+                          <path d={LOWER_LASH_D} fill="none" stroke="#7a3a2c" strokeWidth="0.75" opacity="0.7" />
                         </g>
                       )}
                     </g>
 
-                    <path d="M48.7 45.2L48.2 46.1" fill="none" stroke="#dba18e" strokeWidth="0.9" />
-                    <path className={g('mouth')} d={MOUTH_D} fill="#7a2e3a" stroke="#5a2030" strokeWidth="0.9" />
+                    <path d="M48.7 45.2L48.2 46.1" fill="none" stroke="#d58c70" strokeWidth="0.9" />
+                    <path className={g('mouth')} d={MOUTH_D} fill="#b4524c" stroke="#a4463f" strokeWidth="0.35" />
 
-                    {/* silver hair, worn messy: layered locks that flick out in points under the brim,
-                        and a fringe swept to one side with its longest lock between the eyes */}
+                    {/* copper hair, worn tousled: layered locks that flick out under the brim, and a
+                        fringe swept to one side with its longest lock between the eyes */}
                     <path
                       d={HAIR_D}
                       fill={u('hair')}
-                      stroke="#5b6494"
+                      stroke="#6a2410"
                       strokeWidth="1.1"
                     />
-                    <path d="M25.6 50C24.6 45 24.6 40 25.4 35" fill="none" stroke="#ffffff" strokeWidth="1.8" opacity="0.7" filter={u('soft')} />
-                    <path d="M70.2 49C71 44.4 71 39.6 70.2 34.8" fill="none" stroke="#5f6a9e" strokeWidth="1.3" opacity="0.45" />
-                    <path d={HAIR_STRANDS_D} fill="none" stroke="#6f79ad" strokeWidth="0.6" opacity="0.7" />
+                    {/* deeper auburn where the locks pass under the brim and where they meet the jaw */}
+                    <g clipPath={u('hairClip')} stroke="none">
+                      <path d="M14 25L82 25L82 29.4C76 31.6 70 31 64 30.4L32 30.4C26 31 20 31.6 14 29.4Z" fill="#a8451c" opacity="0.55" filter={u('soft')} />
+                      <path d="M30.2 41C30 45 31.2 48.6 34.2 51.6L36 52L32.4 40Z" fill="#a8451c" opacity="0.7" filter={u('soft')} />
+                      <path d="M65.8 40C66 45 64.8 49.6 62 53.6L60.4 54L63.6 40Z" fill="#a8451c" opacity="0.7" filter={u('soft')} />
+                      <path d="M24.6 36.4C24 40.4 24.8 44 27 46.6" fill="none" stroke="#ffcf9c" strokeWidth="1.3" opacity="0.4" filter={u('soft')} />
+                    </g>
+                    <path d={HAIR_STRANDS_D} fill="none" stroke="#8e3814" strokeWidth="0.6" opacity="0.6" />
 
                     {/* the brim casts down over the forehead */}
                     <path d="M28.5 24C33.5 29.6 40 32 48 32C56 32 62.5 29.6 67.5 24L67.5 19L28.5 19Z" fill={INK} opacity="0.22" stroke="none" filter={u('soft')} />
+                    {/* one glossy ring across the crown, sitting on top of the brim's shade */}
+                    <path d={HAIR_GLOSS_D} fill="#ffe2c2" opacity="0.4" stroke="none" />
 
                     {/* blink lids and the open mouth ride over the finished face */}
-                    <g className={g('lids')} fill="none" strokeWidth="1.8" stroke="#2a1820">
+                    <g className={g('lids')} fill="none" strokeWidth="1.8" stroke="#3e1e16">
                       <path d={LID_D} />
                     </g>
-                    <g className={g('mouthopen')} stroke="#8c3a46">
-                      <ellipse cx="48.4" cy="49.8" rx="3.8" ry="2.8" fill="#5c2338" strokeWidth="1.6" />
-                      <ellipse cx="48.4" cy="51.3" rx="2.2" ry="1" fill="#e07a72" stroke="none" />
+                    <g className={g('mouthopen')} stroke="#9a463c">
+                      <path d="M45 48.4C45.4 52.4 51.4 52.6 52 48.2C49.6 48.9 47.4 48.9 45 48.4Z" fill="#e2727a" strokeWidth="0.9" />
+                      <path d="M46.4 50.8C47.6 51.9 49.8 51.9 51 50.6C49.6 50.1 47.8 50.1 46.4 50.8Z" fill="#ffb4b0" stroke="none" />
                     </g>
-                    {/* brows read through the fringe, the way anime draws them */}
-                    <g className={g('brows')} fill="none" stroke="#4f5888" strokeWidth="1" opacity="0.8">
+                    {/* brows read through the fringe, the way anime draws them: half-seen, so the locks' own
+                        outlines stay in front */}
+                    <g className={g('brows')} fill="#3e1e16" stroke="#3e1e16" strokeWidth="0.3" opacity="0.6">
                       <path d={BROW_L_D} />
                       <path d={BROW_R_D} />
                     </g>
@@ -3331,28 +3380,29 @@ export const CompanionSprite: React.FC<CompanionSpriteProps> = ({
                     {/* the replacement face: one rig, five vignettes, opacity-toggled variants */}
                     {vignette && (
                       <>
-                        <g className={g('vfLids')} fill="none" strokeWidth="1.8" stroke="#2a1820">
+                        <g className={g('vfLids')} fill="none" strokeWidth="1.8" stroke="#3e1e16">
                           <path d={LID_D} />
                         </g>
-                        <g className={g('vfBrows')} fill="none" stroke="#4f5888" strokeWidth="1" opacity="0.8">
+                        <g className={g('vfBrows')} fill="#3e1e16" stroke="#3e1e16" strokeWidth="0.3" opacity="0.6">
                           <path d={BROW_L_D} />
                           <path className={g('vfBrowR')} d={BROW_R_D} />
                         </g>
-                        <path className={g('vfMouth')} d={MOUTH_D} fill="#7a2e3a" stroke="#5a2030" strokeWidth="0.9" />
-                        <g className={g('vfMouthO')} opacity="0" stroke="#8c3a46">
-                          <ellipse cx="48.4" cy="49.8" rx="3" ry="2.7" fill="#5c2338" strokeWidth="1.6" />
-                          <ellipse cx="48.4" cy="51" rx="1.7" ry="0.85" fill="#e07a72" stroke="none" />
+                        <path className={g('vfMouth')} d={MOUTH_D} fill="#b4524c" stroke="#a4463f" strokeWidth="0.35" />
+                        <g className={g('vfMouthO')} opacity="0" stroke="#9a463c">
+                          <ellipse cx="48.4" cy="49.8" rx="2.6" ry="2.4" fill="#e2727a" strokeWidth="1" />
+                          <ellipse cx="48.4" cy="50.9" rx="1.5" ry="0.8" fill="#ffb4b0" stroke="none" />
                         </g>
-                        <g className={g('vfMouthBig')} opacity="0" stroke="#8c3a46">
-                          <ellipse cx="48.4" cy="50" rx="5" ry="4" fill="#5c2338" strokeWidth="1.7" />
-                          <ellipse cx="48.4" cy="52.2" rx="2.6" ry="1.3" fill="#e07a72" stroke="none" />
+                        <g className={g('vfMouthBig')} opacity="0" stroke="#9a463c">
+                          <path d="M43.8 47.8C44.2 54.2 52.6 54.4 53 47.6C49.8 48.6 47 48.6 43.8 47.8Z" fill="#e2727a" strokeWidth="1.1" />
+                          <path d="M45.6 51.6C47.2 53.2 49.8 53.2 51.4 51.4C49.6 50.6 47.4 50.6 45.6 51.6Z" fill="#ffb4b0" stroke="none" />
                         </g>
                         <path
                           className={g('vfSmile')}
                           opacity="0"
-                          d="M43 46.8C45.6 52.8 51.4 53 54 46.6C50.2 48.6 46.6 48.8 43 46.8Z"
-                          fill="#5c2338"
-                          strokeWidth="1.7"
+                          d="M44 47.4C45.6 52.4 51.4 52.6 53 46.8C50 48.2 47 48.4 44 47.4Z"
+                          fill="#e8787f"
+                          stroke="#9a463c"
+                          strokeWidth="1.1"
                         />
                         <HeadFx uid={uid} u={u} v={vignette} />
                       </>
