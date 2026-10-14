@@ -142,6 +142,10 @@ Two properties hold by construction:
 
 Styling stays with the site: bold is the same text at full opacity one weight up rather than a heavier slab, list markers sit at 25% (bullets) and 40% (ordinals) white, and block spacing is a single `mt-3`. The streaming caret is placed *inside* the last block so it keeps sitting on the line still being typed instead of dropping below a paragraph or a list.
 
+#### Where a link ends
+
+`linkify` used to treat everything up to the next space as part of an address. English puts a space after almost every URL, so it held; a Chinese sentence has no spaces, so "（github.com/ucph-ccs/OpenMMLA），配套文档完整（openmmla.readthedocs.io），并正应用于哥本哈根大学与 Life Campus" became one underlined link running from the repository to the word before "Life", and the address it pointed at went nowhere. An address now takes only the ASCII characters RFC 3986 allows, so a CJK character, a full-width bracket or a full-width comma ends it. The worker percent-encodes the Wikipedia query, so its links stay inside that set. `readthedocs.io` joined `LINK_HOSTS` at the same time, since the knowledge base gives the OpenMMLA documentation as a bare `openmmla.readthedocs.io`, which no rule turned into a link before.
+
 #### Backslash escapes
 
 The model writes paper titles with JSON-style escaped quotes — `**\"OpenMMLA: an IoT-based…\"**` — a habit picked up from JSON-shaped training data. The persona now forbids it (see [Answer shape](#answer-shape)), and the renderer undoes it anyway, because a prompt rule is not a guarantee:

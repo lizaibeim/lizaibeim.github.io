@@ -59,12 +59,20 @@ const LINK_HOSTS = [
   'arxiv.org',
   'linkedin.com',
   'ucph-cola.org',
+  'readthedocs.io',
 ];
 
-const URL_SOURCE = `https?://[^\\s<>]+|(?:[a-z0-9-]+\\.)*(?:${LINK_HOSTS.join('|').replace(
+// the characters an address can carry (RFC 3986), ASCII only. anything else ends
+// it — a CJK character, a full-width bracket, a space. "any non-space" used to be
+// the rule, and a Chinese sentence has no spaces: "github.com/x），配套文档完整（…）"
+// ran on to the next space, and the link it made went nowhere. the worker
+// percent-encodes the wikipedia query, so its links stay inside this set.
+const URL_CHAR = "[\\w\\-.~:/?#\\[\\]@!$&'()*+,;=%]";
+
+const URL_SOURCE = `https?://${URL_CHAR}+|(?:[a-z0-9-]+\\.)*(?:${LINK_HOSTS.join('|').replace(
   /\./g,
   '\\.',
-)})(?:/[^\\s<>]*)?`;
+)})(?:/${URL_CHAR}*)?`;
 
 // a match glued to the preceding character is part of something longer — an
 // address (zali@di.ku.dk), a path, a hostname we did not mean (notgithub.com)
