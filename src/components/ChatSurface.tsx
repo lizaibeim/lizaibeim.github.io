@@ -67,12 +67,19 @@ const LINK_HOSTS = [
 // the rule, and a Chinese sentence has no spaces: "github.com/x），配套文档完整（…）"
 // ran on to the next space, and the link it made went nowhere. the worker
 // percent-encodes the wikipedia query, so its links stay inside this set.
-const URL_CHAR = "[\\w\\-.~:/?#\\[\\]@!$&'()*+,;=%]";
+const URL_CHAR = "[\\w\\-.~:/?#@!$&'()*+,;=%]";
 
 const URL_SOURCE = `https?://${URL_CHAR}+|(?:[a-z0-9-]+\\.)*(?:${LINK_HOSTS.join('|').replace(
   /\./g,
   '\\.',
 )})(?:/${URL_CHAR}*)?`;
+
+// a markdown link — banned in the persona, written anyway now and then. render it
+// as the one link it means: before this, "[github.com/x](https://github.com/x)"
+// came out as a bracket and an anchor whose href ran on through "](https://…)".
+// the target must still be an http(s) address or a known host, so
+// "[x](javascript:…)" stays text.
+const MARKDOWN_LINK_SOURCE = `\\[([^\\]\\n]{1,200})\\]\\((${URL_SOURCE})\\)`;
 
 // a match glued to the preceding character is part of something longer — an
 // address (zali@di.ku.dk), a path, a hostname we did not mean (notgithub.com)
@@ -109,15 +116,24 @@ const splitTrailingPunctuation = (match: string): [string, string] => {
 // model's output cannot become anything but a link. text with no url comes back
 // as the same string it went in as.
 export function linkify(text: string): React.ReactNode {
-  const pattern = new RegExp(URL_SOURCE, 'gi');
+  const pattern = new RegExp(`${MARKDOWN_LINK_SOURCE}|${URL_SOURCE}`, 'gi');
   const nodes: React.ReactNode[] = [];
   let cursor = 0;
 
   for (let match = pattern.exec(text); match; match = pattern.exec(text)) {
     const start = match.index;
-    if (start > 0 && GLUED_BEFORE.test(text[start - 1])) continue;
+    const label = match[1];
+    let url: string;
+    let consumed: number;
 
-    const [url] = splitTrailingPunctuation(match[0]);
+    if (label !== undefined) {
+      url = match[2];
+      consumed = match[0].length;
+    } else {
+      if (start > 0 && GLUED_BEFORE.test(text[start - 1])) continue;
+      [url] = splitTrailingPunctuation(match[0]);
+      consumed = url.length;
+    }
     if (!url) continue;
 
     if (start > cursor) nodes.push(text.slice(cursor, start));
@@ -129,11 +145,11 @@ export function linkify(text: string): React.ReactNode {
         rel="noreferrer"
         className={LINK_CLASS}
       >
-        {url}
+        {label ?? url}
       </a>,
     );
 
-    cursor = start + url.length;
+    cursor = start + consumed;
     // the punctuation we peeled off is text again, so rewind to it
     pattern.lastIndex = cursor;
   }
