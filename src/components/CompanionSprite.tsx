@@ -27,12 +27,12 @@ const ART_H = 120;
 
 // the view box the sprite actually paints into. measured, not guessed: screen boxes sampled
 // every 40ms across all three base cycles and all five vignettes put the union of every
-// visible element at x -28.0..117.4, y -30.6..122.2 facing right. what drives those corners
-// is not the body — it is the scarf's loose end when a ghost pose swings the whole figure
-// about its feet, the onion skins themselves, the staff's amber halo raised for flight, and
-// the hat lying on the floor in #1. three units of air on top of that. the box is kept
-// symmetric about x=50, the axis the character is drawn around, so the facing flip below
-// mirrors it in place.
+// visible element at x -27.9..117.4, y -30.6..122.2 facing right. what drives those corners
+// is not the body — it is the staff's amber halo when a ghost pose swings the whole figure
+// about its feet, the onion skins themselves, the same halo raised for flight, and the hat
+// lying on the floor in #1. the capelet stays well inside all of them. three units of air on
+// top of that. the box is kept symmetric about x=50, the axis the character is drawn around,
+// so the facing flip below mirrors it in place.
 const VIEW_X = -31;
 const VIEW_Y = -34;
 const VIEW_W = 162;
@@ -1962,8 +1962,10 @@ const baseStatic = (uid: string, key: string | null) => `
 .${uid}-head{transform-box:view-box;transform-origin:48px 53px}
 .${uid}-cone{transform-box:view-box;transform-origin:48px 21px}
 .${uid}-star{transform-box:view-box;transform-origin:${HAT_TIP_X}px ${HAT_TIP_Y}px}
-.${uid}-scarfA{transform-box:view-box;transform-origin:26px 51px}
-.${uid}-scarfB{transform-box:view-box;transform-origin:26px 57.4px}
+.${uid}-capeA{transform-box:view-box;transform-origin:22px 52px}
+.${uid}-capeAHem{transform-box:view-box;transform-origin:22px 66px}
+.${uid}-capeFly{transform-box:view-box;transform-origin:22px 53px}
+.${uid}-capeFlap{transform-box:view-box;transform-origin:${CAPE_FLAP_O.replace(' ', 'px ')}px}
 .${uid}-book{transform-box:view-box;transform-origin:82.5px 55px}
 .${uid}-pages{transform-box:view-box;transform-origin:73.5px 56.5px}
 .${uid}-legF{transform-box:view-box;transform-origin:56px 70.5px}
@@ -1974,14 +1976,15 @@ const baseStatic = (uid: string, key: string | null) => `
 .${uid}-glow{transform-box:view-box;transform-origin:9px 15px;opacity:.85}
 .${uid}-lids{opacity:0}
 .${uid}-mouthopen{opacity:0}
-.${uid}-carpet,.${uid}-carpetLip,.${uid}-flyLegs,.${uid}-flyTailA,.${uid}-flyTailB{opacity:0}
-.${uid}-walk .${uid}-carpet,.${uid}-walk .${uid}-carpetLip,.${uid}-walk .${uid}-flyLegs,.${uid}-walk .${uid}-flyTailA,.${uid}-walk .${uid}-flyTailB{opacity:1}
+.${uid}-carpet,.${uid}-carpetLip,.${uid}-flyLegs,.${uid}-flyTailA,.${uid}-flyTailB,.${uid}-capeFly{opacity:0}
+.${uid}-walk .${uid}-carpet,.${uid}-walk .${uid}-carpetLip,.${uid}-walk .${uid}-flyLegs,.${uid}-walk .${uid}-flyTailA,.${uid}-walk .${uid}-flyTailB,.${uid}-walk .${uid}-capeFly{opacity:1}
 .${uid}-walk .${uid}-flyRise{transform:translateY(-10px) rotate(2.4deg)}
 .${uid}-walk .${uid}-legB{transform:translate(3px,-31px) rotate(9deg)}
 .${uid}-walk .${uid}-legF{transform:translate(-3px,-31px) rotate(-9deg)}
 .${uid}-walk .${uid}-flyStaff{transform:translateY(-9px) rotate(-3.4deg)}
-.${uid}-walk .${uid}-scarfA{transform:rotate(5deg) scale(1.1,.92)}
-.${uid}-walk .${uid}-scarfB{transform:rotate(4deg) scale(1.1,.92)}
+/* in flight the hanging cape hands over to the streaming one: it swings back toward the
+   flight pose as it fades */
+.${uid}-walk .${uid}-capeA{opacity:0;transform:rotate(14deg) scale(1.06,.94)}
 .${uid}-walk .${uid}-shadow{transform:translateY(2px) scale(.58,.47);opacity:.3}
 ${rigOrigins(uid, key)}
 ${key ? vfxShared(uid) : ''}`;
@@ -2003,8 +2006,15 @@ ${key ? vfxShared(uid) : ''}`;
 // lockstep with the bob. the lean pivots on the feet at y=113.6, seventeen units below the
 // seat: the seat barely moves while the hat tip swings, so he tips without sliding off.
 const baseAnim = (uid: string) => `
-.${uid}-legF,.${uid}-legB,.${uid}-armB,.${uid}-armF,.${uid}-sway,.${uid}-cone,.${uid}-head,.${uid}-book,.${uid}-flyStaff,.${uid}-scarfA,.${uid}-scarfB{transition:transform .18s ease-out}
+.${uid}-legF,.${uid}-legB,.${uid}-armB,.${uid}-armF,.${uid}-sway,.${uid}-cone,.${uid}-head,.${uid}-book,.${uid}-flyStaff{transition:transform .18s ease-out}
 .${uid}-carpet,.${uid}-carpetLip,.${uid}-flyLegs,.${uid}-flyTailA,.${uid}-flyTailB{transition:opacity .2s ease-out}
+/* the two capes never show together. the transition that runs is the one declared on the state
+   being entered, so each cape gets a quick exit (.11s, no delay) and an entrance that waits
+   until the other has all but gone */
+.${uid}-capeA{transition:opacity .16s ease-out .08s,transform .2s ease-out}
+.${uid}-walk .${uid}-capeA{transition:opacity .11s ease-in,transform .16s ease-out}
+.${uid}-capeFly{transition:opacity .11s ease-in}
+.${uid}-walk .${uid}-capeFly{transition:opacity .16s ease-out .08s}
 .${uid}-flyRise{transition:transform .3s cubic-bezier(.22,.86,.3,1)}
 .${uid}-idle .${uid}-body{animation:${uid}Float 2.6s ease-in-out infinite}
 .${uid}-idle .${uid}-breathe{animation:${uid}Breath 2.6s ease-in-out infinite}
@@ -2035,12 +2045,12 @@ const baseAnim = (uid: string) => `
 .${uid}-walk .${uid}-carpetFringeB{animation:${uid}CarpetFringe 1.6s ease-in-out -.12s infinite}
 .${uid}-walk .${uid}-carpetFringeF{animation:${uid}CarpetFringe 1.6s ease-in-out infinite}
 .${uid}-walk .${uid}-carpetAura{animation:${uid}CarpetAura 2.2s ease-in-out infinite}
-.${uid}-idle .${uid}-scarfA{animation:${uid}ScarfA 2.6s ease-in-out infinite}
-.${uid}-idle .${uid}-scarfB{animation:${uid}ScarfB 2.6s ease-in-out -.5s infinite}
-.${uid}-walk .${uid}-scarfA{animation:${uid}ScarfAFly .9s ease-in-out infinite}
-.${uid}-walk .${uid}-scarfB{animation:${uid}ScarfBFly .76s ease-in-out -.2s infinite}
-.${uid}-talk .${uid}-scarfA{animation:${uid}ScarfA 1.56s ease-in-out infinite}
-.${uid}-talk .${uid}-scarfB{animation:${uid}ScarfB 1.56s ease-in-out -.3s infinite}
+.${uid}-idle .${uid}-capeA{animation:${uid}CapeA 2.6s ease-in-out infinite}
+.${uid}-idle .${uid}-capeAHem{animation:${uid}CapeHem 2.6s ease-in-out -2.3s infinite}
+.${uid}-walk .${uid}-capeFly{animation:${uid}CapeFly 1.1s ease-in-out infinite}
+.${uid}-walk .${uid}-capeFlap{animation:${uid}CapeFlap .56s ease-in-out infinite}
+.${uid}-talk .${uid}-capeA{animation:${uid}CapeA 1.56s ease-in-out infinite}
+.${uid}-talk .${uid}-capeAHem{animation:${uid}CapeHem 1.56s ease-in-out -1.38s infinite}
 .${uid}-talk .${uid}-body{animation:${uid}TalkBob .78s ease-in-out infinite}
 .${uid}-talk .${uid}-breathe{animation:${uid}Breath 1.3s ease-in-out infinite}
 .${uid}-talk .${uid}-head{animation:${uid}HeadTalk .78s ease-in-out infinite}
@@ -2083,10 +2093,10 @@ const baseAnim = (uid: string) => `
 @keyframes ${uid}CarpetRipple{0%,100%{transform:translateY(0) rotate(.45deg) skewY(1.8deg) scaleY(.984)}25%{transform:translateY(-1px) rotate(0deg) skewY(0deg) scaleY(1.028)}50%{transform:translateY(0) rotate(-.45deg) skewY(-1.8deg) scaleY(.984)}75%{transform:translateY(.9px) rotate(0deg) skewY(0deg) scaleY(1.028)}}
 @keyframes ${uid}CarpetFringe{0%,50%,100%{transform:rotate(0deg) scaleX(1)}25%{transform:rotate(3.2deg) scaleX(1.05)}75%{transform:rotate(-3.2deg) scaleX(1.05)}}
 @keyframes ${uid}CarpetAura{0%,100%{transform:scale(1,.92);opacity:.5}50%{transform:scale(1.06,1.12);opacity:.85}}
-@keyframes ${uid}ScarfA{0%,100%{transform:rotate(0deg) scale(1,1)}36%{transform:rotate(3deg) scale(.96,1.05)}70%{transform:rotate(-1.6deg) scale(1.02,.97)}}
-@keyframes ${uid}ScarfB{0%,100%{transform:rotate(0deg) scale(1,1)}40%{transform:rotate(-2.6deg) scale(.95,1.05)}74%{transform:rotate(1.4deg) scale(1.02,.97)}}
-@keyframes ${uid}ScarfAFly{0%,100%{transform:rotate(5deg) scale(1.1,.92)}50%{transform:rotate(8deg) scale(1.15,.86)}}
-@keyframes ${uid}ScarfBFly{0%,100%{transform:rotate(4deg) scale(1.1,.92)}50%{transform:rotate(1.5deg) scale(1.13,.9)}}
+@keyframes ${uid}CapeA{0%,100%{transform:rotate(0deg)}40%{transform:rotate(1.9deg)}72%{transform:rotate(-.7deg)}}
+@keyframes ${uid}CapeHem{0%,100%{transform:skewX(0deg) scaleY(1)}40%{transform:skewX(-5deg) scaleY(1.015)}72%{transform:skewX(1.9deg) scaleY(.995)}}
+@keyframes ${uid}CapeFly{0%,100%{transform:rotate(0deg) scale(1,1)}34%{transform:rotate(2deg) scale(1.03,.97)}68%{transform:rotate(-1.2deg) scale(.985,1.025)}}
+@keyframes ${uid}CapeFlap{0%,100%{transform:skewY(0deg) scaleX(1)}26%{transform:skewY(7deg) scaleX(1.03)}52%{transform:skewY(1deg) scaleX(1)}76%{transform:skewY(-5deg) scaleX(.98)}}
 @keyframes ${uid}TalkBob{0%,100%{transform:translateY(0) scale(1.014,.988)}18%{transform:translateY(-1.5px) scale(.995,1)}50%{transform:translateY(-2.2px) scale(.985,1)}82%{transform:translateY(-1px) scale(1.005,1)}}
 @keyframes ${uid}HeadTalk{0%,100%{transform:translateY(0) rotate(-2.2deg) scale(1,1)}28%{transform:translateY(-1.5px) rotate(1.1deg) scale(1.02,.985)}50%{transform:translateY(-1.3px) rotate(2.2deg) scale(1,1)}78%{transform:translateY(-.5px) rotate(-.7deg) scale(.99,1.014)}}
 @keyframes ${uid}ConeTalk{0%,100%{transform:rotate(4.3deg)}34%{transform:rotate(-2.5deg)}62%{transform:rotate(-4.3deg)}}
@@ -2138,8 +2148,8 @@ const VignetteDefs: React.FC<Omit<FxProps, 'u'>> = ({ uid, v }) => (
     {v === 'motion-match-ghosts' && (
       // one silhouette of the mage, reused by all ten onion skins: hat, head and hair, collar,
       // coat, both boots, both fists, the staff and the spellbook, drawn as fills and fat
-      // strokes. the scarf ends are left out: the poses swing about the feet, and 65 units
-      // out from them the ends would be thrown past the edge of the view box
+      // strokes. the capelet is left out: the skins are poses, and a sheet of cloth behind
+      // each one would only blur the silhouettes they are there to show
       <g
         id={`${uid}-ghost`}
         fill="#93a8ff"
@@ -2622,7 +2632,7 @@ const INK = '#171b36';
 
 // the hat silhouette is painted three times — fill, clip, contour — so it lives in one place.
 // the cone leans back and its tip folds over behind him, so whichever way he faces the hat
-// trails the same way the scarf does: one wind, not two
+// trails the same way the cape flares: one wind, not two
 const HAT_CONE_D =
   'M35.8 20.4C37 14.4 39.2 9 42.6 4.8C36.6 4.6 29.6 5.2 23.4 6.8C22.2 7.1 21.6 6.2 22.6 5.4C28.6 0.8 36.8 -2.6 43.6 -3.6C47.4 -4.1 49.8 -2.6 51.2 0.2C54.4 6.4 57.8 13 60.4 20.4C52.6 23.4 43.4 23.4 35.8 20.4Z';
 const HAT_BRIM_D =
@@ -2708,12 +2718,49 @@ const COAT_HEM_D =
 const COLLAR_D =
   'M24 64.4C21.4 60.6 19.8 56.4 20 52.6C20.2 49 22.8 47.2 26.2 47.6C29 48 31.6 49.2 33.6 50.4C36.6 54 41.6 56 48 56C54.4 56 59.4 54 62.4 50.4C64.4 49.2 67 48 69.8 47.6C73.2 47.2 75.8 49 76 52.6C76.2 56.4 74.6 60.6 72 64.4C62 68.4 34 68.4 24 64.4Z';
 
-// the scarf's two loose ends. they leave from behind the trailing shoulder and stream
-// away from the way he faces, each forked at the tip; the flip carries them with facing
-const SCARF_A_D =
-  'M26 47.6C20 45.6 15.4 42.6 9.6 42.4C4.4 42.2 1 45.8 -3.4 46C-7.4 46.2 -10.8 43.2 -14.8 40.8L-11.4 45.4L-15 49.2C-10.2 50.6 -6.2 52.6 -1.6 52.2C3.4 51.8 6.6 48.6 11.4 48.8C16.6 49 21 52.8 26.2 54.2Z';
-const SCARF_B_D =
-  'M26 54.6C21 55.6 17 58.6 12 59C7.6 59.4 4.6 56.6 0 56.8C-2.6 56.9 -5 57.8 -7.4 59.4L-3.6 61.2L-6.6 64.8C-3 63.8 0 62.4 3.2 62.6C7.4 62.8 10 65 14.4 64.6C19 64.2 22.2 61.4 26.2 60.4Z';
+// the capelet: a short crimson cape that hangs from under the rolled collar and drapes behind
+// him on the trailing side only. the leading side has no piece at all: anything red showing
+// past the far arm and the book reads, at 64px, as a stray red outline round the coat.
+// nothing climbs above the collar lobes, so it never frames the head.
+//
+// it is lined in warm gold satin, never a dark lining: crimson over a dark wine inside, flaring
+// behind the body, is exactly a vampire's cloak. red outside, gold inside is a royal mantle.
+//
+// the idle piece: crimson, with the front edge turned back to show the gold lining as a strip
+// down the outside — a mantle's facing, so the cape reads crimson at 64px and the gold is a
+// trim on it, not a second colour fighting it. it comes out from under the collar lobe low on
+// the shoulder, rounds over it and falls in a short bell whose lowest corner stops level with
+// the staff hand, beside the glove rather than behind it, so the hand and the staff stay clean
+// against the dark. behind the glove the hem climbs to meet the coat, and everything behind the
+// coat runs well inward so a sway never uncovers a cut edge.
+const CAPE_A_D =
+  'M42 49.6L22.4 49.6C21.2 52.6 19.2 55.6 16.2 57.8C12 60.8 7.8 65.4 5.2 70.4C2.8 75 1 79.4 -0.2 82.4C-0.6 83.6 -0.2 84.6 0.8 84.8C4.4 85.2 7.8 85.4 11 85.6C14.6 85.8 18.2 84.6 21.2 82.8C23.2 81.6 25.4 80.8 28 80.6C32 80.4 37 80.4 42 80.4Z';
+// the front edge is turned back along its whole length, showing a strip of the gold lining
+// that widens as the cape flares. the strip is drawn generously past the silhouette and
+// clipped to it
+const CAPE_A_LIN_D =
+  'M17.6 59.2C13.6 62.4 10 66.6 7.6 71.2C5.4 75.4 3.8 79.8 3 85.4L-8 86L-8 58L14 54Z';
+const CAPE_A_TURN_D = 'M17.6 59.2C13.6 62.4 10 66.6 7.6 71.2C5.4 75.4 3.8 79.8 3 85.4';
+const CAPE_A_HEM_D = 'M-0.2 82.4C-0.6 83.6 -0.2 84.6 0.8 84.8C4.4 85.2 7.8 85.4 11 85.6C14.6 85.8 18.2 84.6 21.2 82.8C23.2 81.6 25.4 80.8 28 80.6';
+// the same piece in flight, drawn on its own rather than rotated: it streams straight back from
+// the shoulder along the line of travel, outer face up, with two long folds that run with the
+// wind instead of fanning from a point. the hem is one long asymmetric swell with a single dip
+// where the lower fold runs out, and its trailing corner lifts and turns, showing a sliver of
+// the gold lining. it stays clear of the carpet: the coat tails and a band of dark sit between
+// the two crimsons.
+const CAPE_FLY_D =
+  'M42 50L22.4 50C21 52.6 19 54.4 16.2 55.2C8.6 57 0 57.8 -7.8 60C-12 61.2 -15.4 63.2 -17.4 65.8C-18.9 67.8 -19.2 70.6 -18.2 72.8C-17.6 74.4 -16.6 75.2 -15.2 75.2C-13 75.6 -11 78.6 -9 79.2C-7.6 79.6 -6.6 78.4 -5.4 78.2C-2 78 2 83.4 6.4 84.4C10 85.2 13.6 85.8 17 85.6C24 86 33 87.4 42 88Z';
+const CAPE_FLY_HEM_D =
+  'M-15.2 75.2C-13 75.6 -11 78.6 -9 79.2C-7.6 79.6 -6.6 78.4 -5.4 78.2C-2 78 2 83.4 6.4 84.4C10 85.2 13.6 85.8 17 85.6C19.4 85.8 21.6 85.9 23.6 86';
+// the outer third of the hem flutters on its own, faster than the whole cape billows. it is the
+// same drawing cut along a line L through (-9, 62.4) and (-5, 80.6) and sheared ALONG that line,
+// so every point on L stays put and the two halves can never part: no seam, no wave, just the
+// trailing end flicking. CAPE_FLAP_TILT is L's angle off vertical.
+const CAPE_FLAP_O = '-7 71.5';
+const CAPE_FLAP_TILT = 12.4;
+const CAPE_FLAP_CLIP_D = 'M-19.9 12.9L5.9 130L-60 130L-60 12.9Z';
+// the main half reaches 0.4 past L, under the flap, so antialiasing never opens a hairline
+const CAPE_MAIN_CLIP_D = 'M-20.3 13L5.5 130.1L60 130.1L60 13Z';
 
 // the staff head: a gold crescent with the amber crystal resting in its cradle. the crystal
 // stays centred on (9, 14), which is where every vignette aims its flares
@@ -2763,7 +2810,7 @@ const carpetDiamond = (cx: number, cy: number, w: number, h: number) =>
 // would overwrite anything set there.
 const CARPET_LIFT = -25;
 
-// a battle-mage in a royal-blue frock coat: a low rolled collar, a crimson scarf, tousled
+// a battle-mage in a royal-blue frock coat: a crimson capelet under a low rolled collar, tousled
 // blue-black hair, teal eyes, and the amber crystal in a crescent as the one light he carries
 export const CompanionSprite: React.FC<CompanionSpriteProps> = ({
   facing,
@@ -2795,6 +2842,48 @@ export const CompanionSprite: React.FC<CompanionSpriteProps> = ({
   const rootClass = `${uid} ${uid}-${STATE_CLASS[state]}${
     vignette ? ` ${uid}-vfx ${uid}-v-${VIGNETTE_KEY[vignette]}` : ''
   }`;
+
+  // the idle cape's cloth, drawn twice by the capeA group below
+  const idleCape = (
+    <>
+      <path d={CAPE_A_D} fill={u('capeOut')} stroke="none" />
+      {/* shade where it falls in behind the arm, and one long fold */}
+      <g clipPath={u('capeAClip')}>
+        <path d="M22.4 59.6C19 62.6 16 67 14.2 72L13.4 86L24 86L26 60Z" fill="#3a0613" opacity="0.5" stroke="none" filter={u('soft')} />
+      </g>
+      <path d="M15.6 64.4C12.8 68.6 10.6 74.4 9.6 80.8" fill="none" stroke="#4c0719" strokeWidth="1.2" opacity="0.45" />
+      {/* the turned-back front edge: gold satin, then the bright red where the
+          crimson rolls over it — the only bright red on the cape */}
+      <path d={CAPE_A_LIN_D} fill={u('capeLin')} stroke="none" clipPath={u('capeAClip')} />
+      <path d="M14.4 60.2C11 63.2 7.8 67 5.6 71.2C3.8 74.8 2.4 78.6 1.4 83" fill="none" stroke="#fff3cc" strokeWidth="0.9" opacity="0.6" clipPath={u('capeAClip')} />
+      <path d="M18.4 60C14.6 63 11 67.2 8.6 71.8C6.4 76 4.8 80.4 4 85.4" fill="none" stroke="#ff6f86" strokeWidth="1.2" opacity="0.8" clipPath={u('capeAClip')} />
+      <path d="M20.6 54.6C19 56.4 17.4 57.6 15.4 59" fill="none" stroke="#ff8a9b" strokeWidth="1.2" opacity="0.7" clipPath={u('capeAClip')} />
+      <path d={CAPE_A_TURN_D} fill="none" stroke={INK} strokeWidth="1" opacity="0.75" clipPath={u('capeAClip')} />
+      <path d={CAPE_A_HEM_D} fill="none" stroke={u('gold')} strokeWidth="3.6" clipPath={u('capeAClip')} />
+      <path d={CAPE_A_D} fill="none" strokeWidth="1.5" />
+    </>
+  );
+
+  // the flight cape's cloth, drawn twice by the capeFly group below
+  const flyCape = (
+    <>
+      <path d={CAPE_FLY_D} fill={u('capeOut')} stroke="none" />
+      <g clipPath={u('capeFlyClip')}>
+        {/* two long folds running back with the wind, nearly parallel: a dark valley under a
+            softer lit ridge. the lower one runs out at the hem's one dip */}
+        <path d="M15.2 59.4C7.2 61.2 -2.4 63.2 -12.6 67.8" fill="none" stroke="#4c0719" strokeWidth="1.3" opacity="0.5" />
+        <path d="M13.4 63.4C5.8 65.4 -2 68.2 -8.4 72.4" fill="none" stroke="#e8506a" strokeWidth="1.3" opacity="0.4" />
+        <path d="M12 68C5.8 70 0.2 73.2 -5.2 77.6" fill="none" stroke="#4c0719" strokeWidth="1.3" opacity="0.5" />
+        {/* the turned edge along the top, where it rolls over the shoulder: the only bright red */}
+        <path d="M19.4 53.6C17.6 55.4 15.6 56.4 13.2 57C5.4 58.6 -2.6 59.6 -10 62" fill="none" stroke="#ff6f86" strokeWidth="1.3" opacity="0.85" />
+        {/* the trailing corner lifts and turns, and the gold lining shows */}
+        <path d="M-21 69.8C-16.4 71.8 -13 74.6 -10.8 78.1L-9 84L-23 84Z" fill={u('capeLin')} stroke="none" />
+        <path d="M-21 69.8C-16.4 71.8 -13 74.6 -10.8 78.1" fill="none" stroke={INK} strokeWidth="1" opacity="0.75" />
+      </g>
+      <path d={CAPE_FLY_HEM_D} fill="none" stroke={u('gold')} strokeWidth="3.6" clipPath={u('capeFlyClip')} />
+      <path d={CAPE_FLY_D} fill="none" strokeWidth="1.5" />
+    </>
+  );
 
   return (
     <svg
@@ -2895,6 +2984,21 @@ export const CompanionSprite: React.FC<CompanionSpriteProps> = ({
           <stop offset="0.34" stopColor="#e3304e" />
           <stop offset="0.74" stopColor="#a8163a" />
           <stop offset="1" stopColor="#6c0b26" />
+        </linearGradient>
+        {/* the capelet: its outer face a step deeper than the scarf's crimson, so the book and
+            the carpet border still pop against it, and the bright red is kept for the edges
+            where the cloth turns. the lining is warm gold satin, lit where it swings out from
+            the body, never a dark lining */}
+        <linearGradient id={g('capeOut')} gradientUnits="userSpaceOnUse" x1="8" y1="54" x2="10" y2="92">
+          <stop offset="0" stopColor="#dc4560" />
+          <stop offset="0.32" stopColor="#c02848" />
+          <stop offset="0.72" stopColor="#9c1a3c" />
+          <stop offset="1" stopColor="#7a1230" />
+        </linearGradient>
+        <linearGradient id={g('capeLin')} gradientUnits="userSpaceOnUse" x1="20" y1="62" x2="2" y2="86">
+          <stop offset="0" stopColor="#c48a34" />
+          <stop offset="0.55" stopColor="#dca24a" />
+          <stop offset="1" stopColor="#eebd62" />
         </linearGradient>
         {/* the spellbook's cover, in the scarf's crimson */}
         <linearGradient id={g('leather')} x1="0.1" y1="0" x2="0.9" y2="1">
@@ -3024,6 +3128,24 @@ export const CompanionSprite: React.FC<CompanionSpriteProps> = ({
         </clipPath>
         <clipPath id={g('hatBrimClip')}>
           <path d={HAT_BRIM_D} />
+        </clipPath>
+        <clipPath id={g('capeAClip')}>
+          <path d={CAPE_A_D} />
+        </clipPath>
+        <clipPath id={g('capeFlyClip')}>
+          <path d={CAPE_FLY_D} />
+        </clipPath>
+        <clipPath id={g('capeTopClip')}>
+          <rect x="-40" y="0" width="100" height="66.4" />
+        </clipPath>
+        <clipPath id={g('capeLowClip')}>
+          <rect x="-40" y="66" width="100" height="70" />
+        </clipPath>
+        <clipPath id={g('capeFlapClip')}>
+          <path d={CAPE_FLAP_CLIP_D} />
+        </clipPath>
+        <clipPath id={g('capeMainClip')}>
+          <path d={CAPE_MAIN_CLIP_D} />
         </clipPath>
         <clipPath id={g('coatClip')}>
           <path d={COAT_D} />
@@ -3189,16 +3311,32 @@ export const CompanionSprite: React.FC<CompanionSpriteProps> = ({
                 {/* torso: sway pivots at the shoulders, breathing scales from the hem */}
                 <g className={g('sway')}>
                   <g className={g('breathe')}>
-                    {/* the scarf's loose ends, behind everything else on the torso */}
-                    <g className={g('scarf')}>
-                      <g className={g('scarfB')}>
-                        <path d={SCARF_B_D} fill={u('scarf')} strokeWidth="1.5" />
-                        <path d="M23.6 56.6C19.6 58 16 60.4 11.6 60.8C7.6 61.2 4.6 58.8 0.4 58.8" fill="none" stroke="#ff9aa8" strokeWidth="1.1" opacity="0.5" />
+                    {/* the capelet, behind everything else on the torso: lining, then the outer
+                        face, then the bright red where the cloth turns, then a hem laid the way the
+                        coat's edging is — a wide stroke clipped to the silhouette, so only its inner
+                        half shows — and the contour last, on top of the trim */}
+                    <g className={g('cape')}>
+                      <g className={g('capeA')}>
+                        {/* the cape swings on the shoulder. it is drawn twice, cut along y=66: the
+                            lower half shears about that line a quarter second behind the swing, so
+                            the hem trails the top and keeps going when the top turns back. a shear
+                            along the cut leaves every point on it in place, so no seam can open */}
+                        <g clipPath={u('capeTopClip')}>{idleCape}</g>
+                        <g clipPath={u('capeLowClip')}>
+                          <g className={g('capeAHem')}>{idleCape}</g>
+                        </g>
                       </g>
-                      <g className={g('scarfA')}>
-                        <path d={SCARF_A_D} fill={u('scarf')} strokeWidth="1.5" />
-                        <path d="M23.4 48.4C18.6 46.6 14.6 44.4 9.6 44.4C4.8 44.4 1.6 47.8 -3.2 48C-6.6 48.2 -9.6 46.4 -12.4 44.6" fill="none" stroke="#ff9aa8" strokeWidth="1.3" opacity="0.6" />
-                        <path d="M22.4 52.2C18.6 50.4 15.2 48.8 11.4 48.8" fill="none" stroke="#6c0b26" strokeWidth="1" opacity="0.45" />
+                      {/* flight only: shown by the walk class, like the coat tails. drawn twice —
+                          once whole but cut at L, once beyond L inside the fast flutter */}
+                      <g className={g('capeFly')} opacity="0">
+                        <g clipPath={u('capeMainClip')}>{flyCape}</g>
+                        <g clipPath={u('capeFlapClip')}>
+                          <g transform={`rotate(${-CAPE_FLAP_TILT} ${CAPE_FLAP_O})`}>
+                            <g className={g('capeFlap')}>
+                              <g transform={`rotate(${CAPE_FLAP_TILT} ${CAPE_FLAP_O})`}>{flyCape}</g>
+                            </g>
+                          </g>
+                        </g>
                       </g>
                     </g>
 
