@@ -71,12 +71,13 @@ export const PROJECTS: Project[] = [
     role: "Design and development",
     body: [
       "OpenMMLA is an open-source IoT toolkit for multimodal data collection, synchronization, and analytics across real-world collaborative environments. It is the working platform of the doctoral research at the University of Copenhagen, designed and developed from February 2024 onward.",
-      "Beyond capture and synchronization, the toolkit provides interactive pipeline components for sensor fusion, behavioral modeling, and visualization, so that a recorded session can be carried through to analysis without leaving the platform. Three pipelines ship ready to use: an audio analyzer that identifies and transcribes speakers, a multi-camera AprilTag positioning system, and a video frame analyzer that pairs a vision-language model with an LLM to label what each person is doing.",
+      "Beyond capture and synchronization, the toolkit provides interactive pipeline components for sensor fusion, behavioral modeling, and visualization, so that a recorded session can be carried through to analysis without leaving the platform. Three pipelines ship ready to use: an audio analyzer that attributes and transcribes speech, a multi-camera AprilTag positioning system, and a video frame analyzer that tracks each person's pose and gaze and can have a vision-language model label what they are doing. A management console runs every part across the lab's machines, and a dashboard follows a session live, replays it, and reports on its speech, space and attention.",
       "It has been used in collaboration with Life Campus on a project funded by the Novo Nordisk Foundation. The toolkit paper was presented at LAK 2025 in Dublin and received the Best Short Paper Award; its evaluation put indoor positioning at roughly 8 cm of average error and reported an 18.5% diarization error rate on a noisy four-person meeting.",
     ],
     tech: ["IoT", "Sensor fusion", "Data synchronization", "Visualization"],
     links: [
       { label: "ucph-ccs/OpenMMLA", href: "https://github.com/ucph-ccs/OpenMMLA", kind: "code" },
+      { label: "openmmla.readthedocs.io", href: "https://openmmla.readthedocs.io", kind: "site" },
     ],
     publications: [
       {
@@ -93,7 +94,7 @@ export const PROJECTS: Project[] = [
         authors: "Z. Li, V. Holm-Janas, S. Yamaguchi, D. Spikol",
         venue: "ICALT 2026",
         year: 2026,
-        note: "Accepted — DOI pending",
+        note: "Best Full Paper Nomination — DOI pending",
       },
     ],
     suggestions: [
